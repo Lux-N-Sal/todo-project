@@ -4,6 +4,7 @@ package com.maker.Smart_To_Do_List.controller;
 import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.*;
 import com.maker.Smart_To_Do_List.exception.AppException;
+import com.maker.Smart_To_Do_List.response.JoinResponse;
 import com.maker.Smart_To_Do_List.service.JwtService;
 import com.maker.Smart_To_Do_List.service.ListService;
 import com.maker.Smart_To_Do_List.service.UserService;
@@ -40,10 +41,10 @@ public class UserController {
      String:        회원가입 성공 Text
      **/
     @PostMapping("/join")
-    public ResponseEntity<String> join(@RequestBody JoinRequest joinDto){
+    public ResponseEntity<JoinResponse> join(@RequestBody JoinRequest joinDto){
 
         // 회원가입 서비스
-        userService.join(
+        final JoinResponse joinResponse = userService.join(
                 joinDto.getLoginId(),
                 joinDto.getLoginPw(),
                 joinDto.getLoginPwCheck(),
@@ -51,7 +52,7 @@ public class UserController {
                 joinDto.getUserEmail()
         );
 
-        return ResponseEntity.ok().body("Join is SUCCESS!!!");
+        return ResponseEntity.ok().body(joinResponse);
     }
 
     /**

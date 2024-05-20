@@ -1,21 +1,20 @@
 package com.maker.Smart_To_Do_List.service;
 
-import com.maker.Smart_To_Do_List.domain.ToDoList;
 import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.*;
-import com.maker.Smart_To_Do_List.enums.Gender;
+import com.maker.Smart_To_Do_List.enums.ResultType;
 import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.mapper.UserMapper;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
+import com.maker.Smart_To_Do_List.response.JoinResponse;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.security.SecurityUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import com.maker.Smart_To_Do_List.auth.JwtUtil;
 
-import javax.naming.AuthenticationException;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -34,7 +33,7 @@ public class UserService {
      [join]:        신규 유저의 회원가입 서비스
      loginId:       회원가입 유저 아이디
      loginPw:       회원가입 유저 패스워드
-     loginPwCheck:  회원가입 패스워드 확인 (사용자가 패스워드를 실수없이 작성했는지 검증)
+     loginPwCheck:  회원가입 패스워드 확인 (사용자가 패스워드를 실수없이 작성했는지 검증)[삭제예정]
      userName:      회원가입 유저 이름
      userEmail:     회원가입 유저 이메일
 
@@ -42,23 +41,46 @@ public class UserService {
      - 패스워드 확인
      - 유저 이름 중복 검증
 
-     return:        "SUCCESS" (String)
+     return:        {"resultType":"T","error":"","body":null,"errorId":"OK"} (JoinResponse)
 
      AppException:  유저 이름이 이미 존재하는 경우
                     "패스워드"와 "패스워드 확인"이 다른 경우
      **/
-    public String join(String loginId, String loginPw,String loginPwCheck, String userName, String userEmail){
+    public JoinResponse join(String loginId, String loginPw, String loginPwCheck, String userName, String userEmail){
 
+        // 수정된 코드: 반환할 joinResponse를 선언
+        JoinResponse joinResponse = new JoinResponse();
+        joinResponse.setBody("");
         // 유저 아이디(loginId) 중복 검증
-        userRepository.findByLoginId(loginId)
-                .ifPresent(user -> {
-                    // 중복이면 RuntimeException throw하고 ExceptionManger로 이동
-                    throw new AppException(ErrorCode.DUPLICATED, loginId + " is already exits");
-                });
+//        userRepository.findByLoginId(loginId)
+//                .ifPresent(user -> {
+//                    // 중복이면 RuntimeException throw하고 ExceptionManger로 이동
+//                    throw new AppException(ErrorCode.DUPLICATED, loginId + " is already exits");
+//                });
+
+        // 수정한 코드: login id 중복 시 에러 반환
+        Optional<User> existUser = userRepository.findByUserId(loginId);
+
+        if(existUser.isPresent()){
+
+            joinResponse.setResultType(ResultType.F);
+            joinResponse.setErrorCode(ErrorCode.DUPLICATED);
+            joinResponse.setError(loginId + " is already exits");
+
+            return joinResponse;
+
+        }
 
         // "패스워드"(loginPw)와 "패스워드 확인"(loginPwCheck)이 다르면 예외처리
         if(!loginPw.equals(loginPwCheck)){
-            throw new AppException(ErrorCode.INVALID_PASSWORD, "Password is not match !");
+//            throw new AppException(ErrorCode.INVALID_PASSWORD, "Password is not match !");
+            // 수정된 코드: 비밀번호 다르면 반환
+            // 그러나  PasswordCheck 삭제해야한다. > front에서 처리하는게 깔끔함.
+            joinResponse.setResultType(ResultType.F);
+            joinResponse.setErrorCode(ErrorCode.INVALID_PASSWORD);
+            joinResponse.setError("Password is not match !");
+
+            return joinResponse;
         }
 
         // Builder를 통해 User 도메인 생성
@@ -74,7 +96,13 @@ public class UserService {
 
         // DB에 저장
         userRepository.save(user);
-        return "SUCCESS";
+
+        joinResponse.setResultType(ResultType.S);
+        joinResponse.setErrorCode(ErrorCode.OK);
+        joinResponse.setError("");
+
+
+        return joinResponse;
     }
 
     /**

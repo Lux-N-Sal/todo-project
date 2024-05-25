@@ -111,6 +111,8 @@ public class VerificationService {
     /**
      [foundUserByLoginId]:  로그인Id를 통해 유저 조회 및 검증
      loginId: 유저를 조회할 로그인 아이디
+     
+     =======>[안씀 조치]
      **/
     public User foundUserByLoginId(String loginId){
         Optional<User> user = userRepository.findByLoginId(loginId);
@@ -124,10 +126,8 @@ public class VerificationService {
      loginPw: 확인할 비밀번호
      user: 비밀번호 주인인지 확인할 user 객체
      **/
-    public void checkPassword(String loginPw, User user){
-        if(!encoder.matches(loginPw,user.getLoginPw())){
-            throw new AppException(ErrorCode.INVALID_PASSWORD, "The password is wrong.");
-        }
+    public Boolean checkPassword(String loginPw, User user){
+        return encoder.matches(loginPw,user.getLoginPw());
     }
 
     /**

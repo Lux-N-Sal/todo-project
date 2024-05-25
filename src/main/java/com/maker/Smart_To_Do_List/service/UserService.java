@@ -2,18 +2,22 @@ package com.maker.Smart_To_Do_List.service;
 
 import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.*;
+import com.maker.Smart_To_Do_List.enums.ErrCode;
 import com.maker.Smart_To_Do_List.enums.ResultType;
 import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.mapper.UserMapper;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
 import com.maker.Smart_To_Do_List.response.JoinResponse;
+import com.maker.Smart_To_Do_List.response.LoginResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import com.maker.Smart_To_Do_List.auth.JwtUtil;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -64,8 +68,8 @@ public class UserService {
         if(existUser.isPresent()){
 
             joinResponse.setResultType(ResultType.F);
-            joinResponse.setErrorCode(ErrorCode.DUPLICATED);
-            joinResponse.setError(loginId + " is already exits");
+            joinResponse.setErrorCode(ErrCode.JE_001);
+            joinResponse.setError(ErrCode.JE_002.getError()+" : "+loginId);
 
             return joinResponse;
 
@@ -77,8 +81,8 @@ public class UserService {
             // 수정된 코드: 비밀번호 다르면 반환
             // 그러나  PasswordCheck 삭제해야한다. > front에서 처리하는게 깔끔함.
             joinResponse.setResultType(ResultType.F);
-            joinResponse.setErrorCode(ErrorCode.INVALID_PASSWORD);
-            joinResponse.setError("Password is not match !");
+            joinResponse.setErrorCode(ErrCode.JE_002);
+            joinResponse.setError(ErrCode.JE_002.getError());
 
             return joinResponse;
         }
@@ -98,8 +102,8 @@ public class UserService {
         userRepository.save(user);
 
         joinResponse.setResultType(ResultType.S);
-        joinResponse.setErrorCode(ErrorCode.OK);
-        joinResponse.setError("");
+        joinResponse.setErrorCode(ErrCode.OK);
+        joinResponse.setError(ErrCode.OK.getError());
 
 
         return joinResponse;
@@ -110,17 +114,57 @@ public class UserService {
      loginId:   로그인 아이디
      loginPw:   로그인 패스워드
 
-     return:    TokenDto
+     return:    LoginResponse
      **/
-    public TokenDto login(String loginId, String loginPw){
+    
+    // 코드 더러움. 매핑을 사용하자
+    public LoginResponse login(String loginId, String loginPw, HttpServletResponse response){
+
+        
+        final LoginResponse loginResponse = new LoginResponse();
+        final LoginDto loginDto = new LoginDto();
+
         // 로그인 아이디(loginId)를 통해 유저 조회
-        User selectedUser = verificationService.foundUserByLoginId(loginId);
+        Optional<User> user = userRepository.findByLoginId(loginId);
+        if(user.isEmpty()){
+            loginDto.setSessionId("");
+            loginResponse.setResultType(ResultType.F);
+            loginResponse.setErrorCode(ErrCode.LE_001);
+            loginResponse.setError(ErrCode.LE_001.getError());
+            loginResponse.setBody(loginDto);
+            return loginResponse;
+        }else{
+            User selectedUser = user.get();
 
-        // 패스워드가 옳바른지 검증
-        verificationService.checkPassword(loginPw,selectedUser);
+            // 패스워드가 옳바른지 검증
+            final Boolean isValid = verificationService.checkPassword(loginPw,selectedUser);
 
-        // Token 생성
-        return JwtUtil.createTokenDto(selectedUser.getLoginId(), secretKey);
+            if(!isValid){
+                loginDto.setSessionId("");
+                loginResponse.setResultType(ResultType.F);
+                loginResponse.setErrorCode(ErrCode.LE_002);
+                loginResponse.setError(ErrCode.LE_002.getError());
+                loginResponse.setBody(loginDto);
+                return loginResponse;
+            }
+
+            final TokenDto tokenDto = JwtUtil.createTokenDto(selectedUser.getLoginId(), secretKey);
+
+            Cookie cookie = new Cookie("refreshToken", tokenDto.getRefreshToken());
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+
+            response.addCookie(cookie);
+
+
+            loginDto.setSessionId(tokenDto.getAccessToken());
+
+            loginResponse.setResultType(ResultType.S);
+            loginResponse.setErrorCode(ErrCode.OK);
+            loginResponse.setError(ErrCode.OK.getError());
+            loginResponse.setBody(loginDto);
+            return loginResponse;
+        }
     }
 
     /**

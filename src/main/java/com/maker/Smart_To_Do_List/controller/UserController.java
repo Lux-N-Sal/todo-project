@@ -5,6 +5,7 @@ import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.*;
 import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.response.JoinResponse;
+import com.maker.Smart_To_Do_List.response.LoginResponse;
 import com.maker.Smart_To_Do_List.service.JwtService;
 import com.maker.Smart_To_Do_List.service.ListService;
 import com.maker.Smart_To_Do_List.service.UserService;
@@ -105,21 +106,29 @@ public class UserController {
      TokenDto:      AccessToken, RefreshToken
      **/
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginDto, HttpServletResponse response){
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginDto, HttpServletResponse response){
 
         // 로그인 서비스
-        TokenDto tokenDto = userService.login(
+//        TokenDto tokenDto = userService.login(
+//                loginDto.getLoginId(),
+//                loginDto.getLoginPw()
+//        );
+
+        final LoginResponse loginResponse = userService.login(
                 loginDto.getLoginId(),
-                loginDto.getLoginPw()
+                loginDto.getLoginPw(),
+                response
         );
+// service로 옮김
+//        Cookie cookie = new Cookie("refreshToken", tokenDto.getRefreshToken());
+//        cookie.setHttpOnly(true);
+//        cookie.setPath("/");
+//
+//        response.addCookie(cookie);
 
-        Cookie cookie = new Cookie("refreshToken", tokenDto.getRefreshToken());
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
 
-        response.addCookie(cookie);
 
-        return new ResponseEntity<>(tokenDto.getAccessToken(), HttpStatus.OK);
+        return new ResponseEntity<>(loginResponse, HttpStatus.OK);
     }
 
     /**

@@ -16,6 +16,7 @@ public enum ErrorCode {
     ACCESS_DENIED(HttpStatus.FORBIDDEN,"");
 
 
+
     private HttpStatus httpStatus;
     private String message;
 }

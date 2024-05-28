@@ -36,6 +36,8 @@ public class VerificationService {
 
         if (user.isEmpty()){
             joinIdDupResponse.setResultType(ResultType.S);
+            joinIdDupResponse.setErrorCode(ErrCode.OK);
+            joinIdDupResponse.setError(ErrCode.OK.getError());
         } else {
             joinIdDupResponse.setResultType(ResultType.F);
             joinIdDupResponse.setErrorCode(ErrCode.JE_001);
@@ -54,6 +56,8 @@ public class VerificationService {
         Optional<User> user = userRepository.findByUserName(userName);
         if (user.isEmpty()){
             joinUserNameDupResponse.setResultType(ResultType.S);
+            joinUserNameDupResponse.setErrorCode(ErrCode.OK);
+            joinUserNameDupResponse.setError(ErrCode.OK.getError());
         } else {
             joinUserNameDupResponse.setResultType(ResultType.F);
             joinUserNameDupResponse.setErrorCode(ErrCode.JE_003);

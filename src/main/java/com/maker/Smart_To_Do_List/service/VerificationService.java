@@ -3,11 +3,15 @@ package com.maker.Smart_To_Do_List.service;
 import com.maker.Smart_To_Do_List.domain.ToDo;
 import com.maker.Smart_To_Do_List.domain.ToDoList;
 import com.maker.Smart_To_Do_List.domain.User;
+import com.maker.Smart_To_Do_List.enums.ErrCode;
+import com.maker.Smart_To_Do_List.enums.ResultType;
 import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
 import com.maker.Smart_To_Do_List.repository.ToDoRepository;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
+import com.maker.Smart_To_Do_List.response.JoinIdDupResponse;
+import com.maker.Smart_To_Do_List.response.JoinUserNameDupResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,24 +30,36 @@ public class VerificationService {
      [checkLoginIdDup]: 회원가입 시, 아이디 중복 검증
      loginId: 검증할 아이디
      **/
-    public boolean checkLoginIdDup(String loginId){
+    public JoinIdDupResponse checkLoginIdDup(String loginId){
+        JoinIdDupResponse joinIdDupResponse = new JoinIdDupResponse();
         Optional<User> user = userRepository.findByLoginId(loginId);
-        if (user.isPresent()){
-            return true;
-        };
-        return false;
+
+        if (user.isEmpty()){
+            joinIdDupResponse.setResultType(ResultType.S);
+        } else {
+            joinIdDupResponse.setResultType(ResultType.F);
+            joinIdDupResponse.setErrorCode(ErrCode.JE_001);
+            joinIdDupResponse.setError(ErrCode.JE_001.getError()+":"+loginId);
+        }
+
+        return joinIdDupResponse;
     }
 
     /**
      [checkUserNameDup]: 회원가입 시, 유저이름 중복 검증
      userName: 중복 검증할 유저 이름
      **/
-    public boolean checkUserNameDup(String userName){
+    public JoinUserNameDupResponse checkUserNameDup(String userName){
+        JoinUserNameDupResponse joinUserNameDupResponse = new JoinUserNameDupResponse();
         Optional<User> user = userRepository.findByUserName(userName);
-        if (user.isPresent()){
-            return true;
-        };
-        return false;
+        if (user.isEmpty()){
+            joinUserNameDupResponse.setResultType(ResultType.S);
+        } else {
+            joinUserNameDupResponse.setResultType(ResultType.F);
+            joinUserNameDupResponse.setErrorCode(ErrCode.JE_003);
+            joinUserNameDupResponse.setError(ErrCode.JE_003.getError()+":"+userName);
+        }
+        return joinUserNameDupResponse;
     }
 
     /**

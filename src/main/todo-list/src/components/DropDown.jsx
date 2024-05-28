@@ -24,7 +24,6 @@ export default function DropDown({value, setValue, datas, label}) {
       exit={{height:"0px"}}
     >
       {datas.map(data=>{
-        console.log(value, data)
         return<motion.div
           className={value===data?styles.checked:""}
           key={data} 

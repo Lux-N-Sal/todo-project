@@ -22,27 +22,26 @@ const Login = () => {
     async onClickLogin(e) {
       e.preventDefault();
       let res;
-      try{
-        setLoading(true);
-        res = await axios.post("/api/v1/user/login", {loginId:id, loginPw:pw}, {headers: {
-          'Content-Type': 'application/json'
-        }});
-        sessionStorage.setItem("accessToken", res.data);
+      setLoading(true);
+      res = await axios.post("/api/v1/user/login", {loginId:id, loginPw:pw}, {headers: {
+        'Content-Type': 'application/json'
+      }});
+      if (res.data.resultType === "S") {
+        sessionStorage.setItem("accessToken", res.data.body.sessionId);
         navigate("/");
         setLoading(false);
-        
-      } catch(err) {
-        setLoading(false);
-        switch(err.response.status) {
-          case 404:
+      } else if (res.data.resultType === "F") {
+        switch(res.data.errorCode) {
+          case 'LE_001':
             alert("아이디가 존재하지 않습니다.")
             break;
-          case 401:
+          case 'LE_002':
             alert("비밀번호가 옳바르지 않습니다.");
             break;
           default:
             alert("오류!");
         }
+        setLoading(false);
       }
     }
   }

@@ -72,29 +72,22 @@ const Register = () => {
 
     async checkIdDup(e) {
       e.preventDefault();
-      try{
-        const res = await axios.post("/api/v1/user/join/id", {loginId:id})
-        if(res.data){
-          alert("아이디가 이미 존재합니다.")
-        } else {
-          setIdChecked(true);
-        }
-      } catch (err) {
-        console.log(err.response.data)
+      const res = await axios.post("/api/v1/user/join/id", {loginId:id});
+      console.log(res)
+      if (res.data.resultType == "S") {
+        setIdChecked(true);
+      } else if (res.data.resultType == "F") {
+        alert("아이디가 이미 존재합니다.")
       }
     },
 
     async checkNameDup(e) {
       e.preventDefault();
-      try{
-        const res = await axios.post("/api/v1/user/join/username", {userName:name})
-        if(res.data){
-          alert("해당 닉네임이 이미 존재합니다.")
-        } else {
-          setNameChecked(true);
-        }
-      } catch (err) {
-        console.log(err.response.data)
+      const res = await axios.post("/api/v1/user/join/username", {userName:name})
+      if(res.data.resultType === "S"){
+        setNameChecked(true);
+      } else if (res.data.resultType === "F") {
+        alert("닉네임이 이미 존재합니다.");
       }
     },
 
@@ -111,23 +104,24 @@ const Register = () => {
         alert("닉네임 중복확인을 해주세요.")
         setLoading(false)
       } else {
-        try{
-          const res = await axios.post("/api/v1/user/join", {
-            loginId: id,
-            loginPw: pw,
-            loginPwCheck: pwC,
-            userName: name,
-            userEmail: email,
-            userJob: job,
-            userGender: genderDto.gender,
-            userAge: age,
-          });
+        const res = await axios.post("/api/v1/user/join", {
+          loginId: id,
+          loginPw: pw,
+          loginPwCheck: pwC,
+          userName: name,
+          userEmail: email,
+          userJob: job,
+          userGender: genderDto.gender,
+          userAge: age,
+        });
+
+        if (res.data.resultType === "S") {
           alert("회원가입 완료!")
           window.location.href = "/user/login";
           setLoading(false)
-        } catch (err) {
-          switch (err.response.status){
-            case 409:
+        } else if (res.data.resultType === "F") {
+          switch (res.data.errorCode){
+            case 'JE_001':
               alert("아이디가 이미 존재합니다.");
               break;
             default:

@@ -6,6 +6,7 @@ import com.maker.Smart_To_Do_List.dto.ChangeListNameRequest;
 import com.maker.Smart_To_Do_List.dto.CreateListRequest;
 import com.maker.Smart_To_Do_List.dto.GetListDto;
 import com.maker.Smart_To_Do_List.dto.ToDoListDto;
+import com.maker.Smart_To_Do_List.response.CreateListResponse;
 import com.maker.Smart_To_Do_List.service.JwtService;
 import com.maker.Smart_To_Do_List.service.ListService;
 import lombok.RequiredArgsConstructor;
@@ -33,16 +34,16 @@ public class ListController {
      [createList]: 리스트 생성
      **/
     @PostMapping("/create")
-    public ResponseEntity<ToDoListDto> createList(@RequestBody CreateListRequest createListDto,
-                                             HttpServletRequest request){
+    public ResponseEntity<CreateListResponse> createList(@RequestBody CreateListRequest createListDto,
+                                                         HttpServletRequest request){
 
         String userId = jwtService.getUserId(request);
-        ToDoListDto createTodoList = listService.createList(
+        CreateListResponse createListResponse = listService.createList(
                 createListDto.getListName(),
                 userId
         );
 
-        return new ResponseEntity<>(createTodoList, HttpStatus.OK);
+        return new ResponseEntity<>(createListResponse, HttpStatus.OK);
     }
 
 

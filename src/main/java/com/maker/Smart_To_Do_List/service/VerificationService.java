@@ -86,13 +86,14 @@ public class VerificationService {
      listName: 중복 검증할 리스트 이름
      **/
 
-    public void checkListNameDuplicate(String userId, String listName){
-        listRepository.findByListName(listName)
-                .ifPresent(list ->{
-                    if (list.getUser().getUserId().equals(userId)){
-                        throw new AppException(ErrorCode.DUPLICATED, listName + " is already exits");
-                    }
-                });
+    public boolean checkListNameDuplicate(String userId, String listName){
+        Optional<ToDoList> listOpt =  listRepository.findByListName(listName);
+//                .ifPresent(list ->{
+//                    if (list.getUser().getUserId().equals(userId)){
+//                        throw new AppException(ErrorCode.DUPLICATED, listName + " is already exits");
+//                    }
+//                });
+        return listOpt.map(toDoList -> toDoList.getUser().getUserId().equals(userId)).orElse(false);
     }
 
     /**

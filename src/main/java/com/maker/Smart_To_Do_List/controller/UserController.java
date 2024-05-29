@@ -4,7 +4,9 @@ package com.maker.Smart_To_Do_List.controller;
 import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.*;
 import com.maker.Smart_To_Do_List.exception.AppException;
+import com.maker.Smart_To_Do_List.response.JoinIdDupResponse;
 import com.maker.Smart_To_Do_List.response.JoinResponse;
+import com.maker.Smart_To_Do_List.response.JoinUserNameDupResponse;
 import com.maker.Smart_To_Do_List.response.LoginResponse;
 import com.maker.Smart_To_Do_List.service.JwtService;
 import com.maker.Smart_To_Do_List.service.ListService;
@@ -68,11 +70,11 @@ public class UserController {
      ?:                 유저 아이디 중복 검사 결과 ([수정할 사항]  <?>로 돼있지만, <Boolean>으로 바꿔도 될 듯?)
      **/
     @PostMapping("/join/id")
-    public ResponseEntity<?> checkLoginId(@RequestBody CheckLoginIdDto checkLoginIdDto){
+    public ResponseEntity<JoinIdDupResponse> checkLoginId(@RequestBody CheckLoginIdDto checkLoginIdDto){
         // 유저 아이디 중복 검사
-        boolean check = verificationService.checkLoginIdDup(checkLoginIdDto.getLoginId());
+        final JoinIdDupResponse joinIdDupResponse = verificationService.checkLoginIdDup(checkLoginIdDto.getLoginId());
 
-        return new ResponseEntity<>(check, HttpStatus.OK);
+        return new ResponseEntity<>(joinIdDupResponse, HttpStatus.OK);
     }
 
     /**
@@ -87,11 +89,11 @@ public class UserController {
      ?:                 유저 이름 중복 검사 결과 ([수정할 사항]  <?>로 돼있지만, <Boolean>으로 바꿔도 될 듯?)
      **/
     @PostMapping("/join/username")
-    public ResponseEntity<?> checkUserName(@RequestBody CheckUserNameDto checkUserNameDto){
+    public ResponseEntity<JoinUserNameDupResponse> checkUserName(@RequestBody CheckUserNameDto checkUserNameDto){
         // 유저 이름 중복 검사
-        boolean check = verificationService.checkUserNameDup(checkUserNameDto.getUserName());
+        final JoinUserNameDupResponse joinUserNameDupResponse = verificationService.checkUserNameDup(checkUserNameDto.getUserName());
 
-        return new ResponseEntity<>(check, HttpStatus.OK);
+        return new ResponseEntity<>(joinUserNameDupResponse, HttpStatus.OK);
     }
 
     /**

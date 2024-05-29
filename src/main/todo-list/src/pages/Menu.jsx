@@ -39,33 +39,29 @@ const Menu = () => {
   const onChangeToDoListName = (e) => setToDoListName(e.target.value);
 
   const addToDoList = async() => {
-    let res;
-    try {
-      setAddListLoading(true);
-      res = await axios.post("/api/v1/list/create", 
-      {
-        listName: toDoListName,
-        sortBy: "ASC_Date"
-      }, 
-      {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-        }
-      })
+    setAddListLoading(true);
+    const res = await axios.post("/api/v1/list/create", 
+    { listName: toDoListName }, 
+    {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+      }
+    })
+    if (res.data.resultType === "S"){
       getToDoListData();
+      setToDoLists(pre=>[...pre, res.data.body])
       expendInput();
-      setAddListLoading(false);
-    } catch(err) {
-      switch(err.response.status){
-        case 409:
+    } else if(res.data.resultType === "F") {
+      switch(res.data.errorCode){
+        case "LIE_001":
           alert("이미 존재하는 리스트 이름입니다.")
           break;
         default:
           alert("오?류");
           break;
       }
-      setAddListLoading(false);
     }
+    setAddListLoading(false);
   }
 
   const getToDoListData = async() => {

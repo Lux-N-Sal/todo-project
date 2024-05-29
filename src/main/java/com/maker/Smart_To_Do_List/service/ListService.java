@@ -6,12 +6,15 @@ import com.maker.Smart_To_Do_List.dto.ChangeListNameRequest;
 import com.maker.Smart_To_Do_List.dto.GetListDto;
 import com.maker.Smart_To_Do_List.dto.SortDto;
 import com.maker.Smart_To_Do_List.dto.ToDoListDto;
+import com.maker.Smart_To_Do_List.enums.ErrCode;
+import com.maker.Smart_To_Do_List.enums.ResultType;
 import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.mapper.ToDoListMapper;
 import com.maker.Smart_To_Do_List.mapper.UserMapper;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
+import com.maker.Smart_To_Do_List.response.CreateListResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -35,29 +38,44 @@ public class ListService {
      listName: 리스트 이름
      userId: 생성한 유저의 아이디
      **/
-    public ToDoListDto createList(String listName, String userId){
+    public CreateListResponse createList(String listName, String userId){
+
+        CreateListResponse createListResponse = new CreateListResponse();
 
         // 유저 조회 및 검증
         User selectedUser = verificationService.foundUser(userId);
 
         // ToDoList 이름 중복 검증(동일 유저에 한해서)
-        verificationService.checkListNameDuplicate(
+        boolean isDup = verificationService.checkListNameDuplicate(
                 userId,
                 listName
         );
 
-        // ToDoList 도메인에 리스트 이름, 소유자 저장
-        ToDoList toDoList = ToDoList.builder()
-                .listId(UUID.randomUUID().toString().replace("-", ""))
-                .listName(listName)
-                .user(selectedUser)
-                .build();
+        if (isDup){
+            createListResponse.setResultType(ResultType.F);
+            createListResponse.setErrorCode(ErrCode.LIE_001);
+            createListResponse.setError(ErrCode.LIE_001.getError());
+            createListResponse.setBody(new ToDoListDto());
+        } else {
+            // ToDoList 도메인에 리스트 이름, 소유자 저장
+            ToDoList toDoList = ToDoList.builder()
+                    .listId(UUID.randomUUID().toString().replace("-", ""))
+                    .listName(listName)
+                    .user(selectedUser)
+                    .build();
 
-        // DB에 저장
-        ToDoList savedToDoList = listRepository.save(toDoList);
+            // DB에 저장
+            ToDoList savedToDoList = listRepository.save(toDoList);
+
+            // 객체 값 부여
+            createListResponse.setResultType(ResultType.S);
+            createListResponse.setErrorCode(ErrCode.OK);
+            createListResponse.setError(ErrCode.OK.getError());
+            createListResponse.setBody(ToDoListMapper.convertToDto(savedToDoList));
+        }
 
         // ToDoList 도메인 -> ToDoList 아이디, 이름이 담긴 Dto
-        return ToDoListMapper.convertToDto(savedToDoList);
+        return createListResponse;
     }
 
     /**

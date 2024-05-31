@@ -10,8 +10,7 @@ import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
 import com.maker.Smart_To_Do_List.repository.ToDoRepository;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
-import com.maker.Smart_To_Do_List.response.JoinIdDupResponse;
-import com.maker.Smart_To_Do_List.response.JoinUserNameDupResponse;
+import com.maker.Smart_To_Do_List.response.EmptyResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,40 +29,40 @@ public class VerificationService {
      [checkLoginIdDup]: 회원가입 시, 아이디 중복 검증
      loginId: 검증할 아이디
      **/
-    public JoinIdDupResponse checkLoginIdDup(String loginId){
-        JoinIdDupResponse joinIdDupResponse = new JoinIdDupResponse();
+    public EmptyResponse checkLoginIdDup(String loginId){
+        EmptyResponse emptyResponse = new EmptyResponse();
         Optional<User> user = userRepository.findByLoginId(loginId);
 
         if (user.isEmpty()){
-            joinIdDupResponse.setResultType(ResultType.S);
-            joinIdDupResponse.setErrorCode(ErrCode.OK);
-            joinIdDupResponse.setError(ErrCode.OK.getError());
+            emptyResponse.setResultType(ResultType.S);
+            emptyResponse.setErrorCode(ErrCode.OK);
+            emptyResponse.setError(ErrCode.OK.getError());
         } else {
-            joinIdDupResponse.setResultType(ResultType.F);
-            joinIdDupResponse.setErrorCode(ErrCode.JE_001);
-            joinIdDupResponse.setError(ErrCode.JE_001.getError()+":"+loginId);
+            emptyResponse.setResultType(ResultType.F);
+            emptyResponse.setErrorCode(ErrCode.JE_001);
+            emptyResponse.setError(ErrCode.JE_001.getError()+":"+loginId);
         }
 
-        return joinIdDupResponse;
+        return emptyResponse;
     }
 
     /**
      [checkUserNameDup]: 회원가입 시, 유저이름 중복 검증
      userName: 중복 검증할 유저 이름
      **/
-    public JoinUserNameDupResponse checkUserNameDup(String userName){
-        JoinUserNameDupResponse joinUserNameDupResponse = new JoinUserNameDupResponse();
+    public EmptyResponse checkUserNameDup(String userName){
+        EmptyResponse emptyResponse = new EmptyResponse();
         Optional<User> user = userRepository.findByUserName(userName);
         if (user.isEmpty()){
-            joinUserNameDupResponse.setResultType(ResultType.S);
-            joinUserNameDupResponse.setErrorCode(ErrCode.OK);
-            joinUserNameDupResponse.setError(ErrCode.OK.getError());
+            emptyResponse.setResultType(ResultType.S);
+            emptyResponse.setErrorCode(ErrCode.OK);
+            emptyResponse.setError(ErrCode.OK.getError());
         } else {
-            joinUserNameDupResponse.setResultType(ResultType.F);
-            joinUserNameDupResponse.setErrorCode(ErrCode.JE_003);
-            joinUserNameDupResponse.setError(ErrCode.JE_003.getError()+":"+userName);
+            emptyResponse.setResultType(ResultType.F);
+            emptyResponse.setErrorCode(ErrCode.JE_003);
+            emptyResponse.setError(ErrCode.JE_003.getError()+":"+userName);
         }
-        return joinUserNameDupResponse;
+        return emptyResponse;
     }
 
     /**
@@ -71,13 +70,14 @@ public class VerificationService {
      userId: 검증할 소유자 아이디
      listId: 검증할 리스트 아이디
      **/
-    public void checkListUser(String userId, String listId){
-        listRepository.findByListId(listId)
-                .ifPresent(list->{
-                    if(!list.getUser().getUserId().equals(userId)){
-                        throw new AppException(ErrorCode.ACCESS_DENIED,"Wrong Access!");
-                    }
-                });
+    public boolean checkListUser(String userId, String listId){
+        Optional<ToDoList> listOpt = listRepository.findByListId(listId);
+//                .ifPresent(list->{
+//                    if(!list.getUser().getUserId().equals(userId)){
+//                        throw new AppException(ErrorCode.ACCESS_DENIED,"Wrong Access!");
+//                    }
+//                });
+        return listOpt.map(list -> list.getUser().getUserId().equals(userId)).orElse(false);
     }
 
     /**
@@ -93,7 +93,7 @@ public class VerificationService {
 //                        throw new AppException(ErrorCode.DUPLICATED, listName + " is already exits");
 //                    }
 //                });
-        return listOpt.map(toDoList -> toDoList.getUser().getUserId().equals(userId)).orElse(false);
+        return listOpt.map(list -> list.getUser().getUserId().equals(userId)).orElse(false);
     }
 
     /**
@@ -129,6 +129,20 @@ public class VerificationService {
         }
         return user.get();
     }
+
+    /**
+     [findUser]: 고유번호를 통해 유저 조회 및 검증
+     userId: 탐색할 유저 아이디
+     **/
+    public User findUser(String userId){
+        Optional<User> user = userRepository.findByUserId(userId);
+        if (user.isEmpty()){
+            throw new AppException(ErrorCode.NOT_FOUND, "User is not found!!");
+        }
+        return user.get();
+    }
+
+
     /**
      [foundUserByLoginId]:  로그인Id를 통해 유저 조회 및 검증
      loginId: 유저를 조회할 로그인 아이디
@@ -161,5 +175,11 @@ public class VerificationService {
             return null;
         }
         return opToDoList.get();
+    }
+
+    public ErrCode checkListNameOk(String userId, String listName) {
+        if (listName.isBlank()) return ErrCode.LIE_002;
+        else if(checkListNameDuplicate(userId, listName)) return ErrCode.LIE_001;
+        else return ErrCode.OK;
     }
 }

@@ -11,7 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class GetListDto {
+public class ToDoListsDto {
     private List<ToDoListDto> toDoListDto;
-    private SortDto sortDto;
 }

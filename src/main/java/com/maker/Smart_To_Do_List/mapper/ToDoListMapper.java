@@ -1,9 +1,9 @@
 package com.maker.Smart_To_Do_List.mapper;
 
 import com.maker.Smart_To_Do_List.domain.ToDoList;
-import com.maker.Smart_To_Do_List.dto.GetListDto;
 import com.maker.Smart_To_Do_List.dto.SortDto;
 import com.maker.Smart_To_Do_List.dto.ToDoListDto;
+import com.maker.Smart_To_Do_List.dto.ToDoListsDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +17,9 @@ public class ToDoListMapper {
         return toDoListDto;
     }
 
-    public static List<ToDoListDto> convertToDtoList(List<ToDoList> toDoLists){
-        return toDoLists.stream().map(ToDoListMapper::convertToDto).collect(Collectors.toList());
+    public static ToDoListsDto convertToDtoList(List<ToDoList> toDoLists){
+        ToDoListsDto toDoListsDto = new ToDoListsDto();
+        toDoListsDto.setToDoListDto(toDoLists.stream().map(ToDoListMapper::convertToDto).collect(Collectors.toList()));
+        return toDoListsDto;
     }
 }

@@ -1,14 +1,12 @@
 package com.maker.Smart_To_Do_List.response;
 
+import com.maker.Smart_To_Do_List.dto.UserInfoDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.validation.constraints.Null;
-
-
 @Getter
 @Setter
 @NoArgsConstructor
-public class JoinIdDupResponse extends BaseResponse<Null> {
+public class UserInfoResponse extends BaseResponse<UserInfoDto>{
 }

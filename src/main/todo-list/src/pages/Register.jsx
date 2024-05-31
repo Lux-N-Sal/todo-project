@@ -74,9 +74,9 @@ const Register = () => {
       e.preventDefault();
       const res = await axios.post("/api/v1/user/join/id", {loginId:id});
       console.log(res)
-      if (res.data.resultType == "S") {
+      if (res.data.resultType === "S") {
         setIdChecked(true);
-      } else if (res.data.resultType == "F") {
+      } else if (res.data.resultType === "F") {
         alert("아이디가 이미 존재합니다.")
       }
     },
@@ -103,11 +103,13 @@ const Register = () => {
       } else if(!nameChecked){
         alert("닉네임 중복확인을 해주세요.")
         setLoading(false)
+      } else if(!email.replace(/\s+/g, '')){
+        alert("이메일을 입력해주세요.")
+        setLoading(false)
       } else {
         const res = await axios.post("/api/v1/user/join", {
           loginId: id,
           loginPw: pw,
-          loginPwCheck: pwC,
           userName: name,
           userEmail: email,
           userJob: job,

@@ -49,7 +49,7 @@ public class UserService {
      AppException:  유저 이름이 이미 존재하는 경우
                     "패스워드"와 "패스워드 확인"이 다른 경우
      **/
-    public JoinResponse join(String loginId, String loginPw, String loginPwCheck, String userName, String userEmail){
+    public JoinResponse join(String loginId, String loginPw, String userName, String userEmail){
 
         // 수정된 코드: 반환할 joinResponse를 선언
         JoinResponse joinResponse = new JoinResponse();
@@ -72,19 +72,7 @@ public class UserService {
 
             return joinResponse;
 
-        }
-
-        // "패스워드"(loginPw)와 "패스워드 확인"(loginPwCheck)이 다르면 예외처리
-        if(!loginPw.equals(loginPwCheck)){
-//            throw new AppException(ErrorCode.INVALID_PASSWORD, "Password is not match !");
-            // 수정된 코드: 비밀번호 다르면 반환
-            // 그러나  PasswordCheck 삭제해야한다. > front에서 처리하는게 깔끔함.
-            joinResponse.setResultType(ResultType.F);
-            joinResponse.setErrorCode(ErrCode.JE_002);
-            joinResponse.setError(ErrCode.JE_002.getError());
-
-            return joinResponse;
-        }
+        };
 
         // Builder를 통해 User 도메인 생성
         // 패스워드(loginPw)는 암호화되어 저장

@@ -47,7 +47,6 @@ public class UserController {
         final JoinResponse joinResponse = userService.join(
                 joinDto.getLoginId(),
                 joinDto.getLoginPw(),
-                joinDto.getLoginPwCheck(),
                 joinDto.getUserName(),
                 joinDto.getUserEmail()
         );

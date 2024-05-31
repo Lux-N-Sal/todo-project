@@ -20,9 +20,6 @@ public class JoinRequest {
     @NotBlank(message = "패스워드를 입력해주세요.")
     private String loginPw;
 
-    @NotBlank(message = "패스워드 확인 문자를 입력해주세요.")
-    private String loginPwCheck;
-
     @NotBlank(message = "이름을 입력해주세요.")
     @Size(min = 2, message = "이름이 너무 짧습니다.")
     private String userName;

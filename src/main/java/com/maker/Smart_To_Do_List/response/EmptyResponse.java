@@ -6,9 +6,8 @@ import lombok.Setter;
 
 import javax.validation.constraints.Null;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
-public class JoinUserNameDupResponse extends BaseResponse<Null> {
+public class EmptyResponse extends BaseResponse<Null> {
 }

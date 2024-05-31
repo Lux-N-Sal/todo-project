@@ -3,25 +3,21 @@ package com.maker.Smart_To_Do_List.service;
 import com.maker.Smart_To_Do_List.domain.ToDoList;
 import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.ChangeListNameRequest;
-import com.maker.Smart_To_Do_List.dto.GetListDto;
-import com.maker.Smart_To_Do_List.dto.SortDto;
 import com.maker.Smart_To_Do_List.dto.ToDoListDto;
+import com.maker.Smart_To_Do_List.dto.ToDoListsDto;
 import com.maker.Smart_To_Do_List.enums.ErrCode;
 import com.maker.Smart_To_Do_List.enums.ResultType;
-import com.maker.Smart_To_Do_List.exception.AppException;
-import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.mapper.ToDoListMapper;
-import com.maker.Smart_To_Do_List.mapper.UserMapper;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
-import com.maker.Smart_To_Do_List.response.CreateListResponse;
+import com.maker.Smart_To_Do_List.response.ToDoListsResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -38,58 +34,66 @@ public class ListService {
      listName: 리스트 이름
      userId: 생성한 유저의 아이디
      **/
-    public CreateListResponse createList(String listName, String userId){
+    public ToDoListsResponse createList(String listName, String userId){
 
-        CreateListResponse createListResponse = new CreateListResponse();
+        // 빈 ToDoListsResponse 객체 생성
+        ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
 
-        // 유저 조회 및 검증
-        User selectedUser = verificationService.foundUser(userId);
+        // 리스트 이름 검증
+        ErrCode checkRes = verificationService.checkListNameOk(userId, listName);
 
-        // ToDoList 이름 중복 검증(동일 유저에 한해서)
-        boolean isDup = verificationService.checkListNameDuplicate(
-                userId,
-                listName
-        );
+        // 검증 결과에 따른 처리
+        switch (checkRes) {
+            // 이름 중복
+            case LIE_001:
+                toDoListsResponse.setResultType(ResultType.F);
+                toDoListsResponse.setErrorCode(ErrCode.LIE_001);
+                toDoListsResponse.setError(ErrCode.LIE_001.getError());
+                toDoListsResponse.setBody(new ToDoListsDto());
+                break;
 
-        if (isDup){
-            createListResponse.setResultType(ResultType.F);
-            createListResponse.setErrorCode(ErrCode.LIE_001);
-            createListResponse.setError(ErrCode.LIE_001.getError());
-            createListResponse.setBody(new ToDoListDto());
-        } else {
-            // ToDoList 도메인에 리스트 이름, 소유자 저장
-            ToDoList toDoList = ToDoList.builder()
-                    .listId(UUID.randomUUID().toString().replace("-", ""))
-                    .listName(listName)
-                    .user(selectedUser)
-                    .build();
+            // 잘못된 형식의 이름
+            case LIE_002:
+                toDoListsResponse.setResultType(ResultType.F);
+                toDoListsResponse.setErrorCode(ErrCode.LIE_002);
+                toDoListsResponse.setError(ErrCode.LIE_002.getError());
+                toDoListsResponse.setBody(new ToDoListsDto());
+                break;
 
-            // DB에 저장
-            ToDoList savedToDoList = listRepository.save(toDoList);
+            // 정상
+            case OK:
+                User user = verificationService.findUser(userId);
+                ToDoList toDoList = ToDoList.builder()
+                        .listId(UUID.randomUUID().toString().replace("-", ""))
+                        .listName(listName)
+                        .user(user)
+                        .build();
 
-            // 객체 값 부여
-            createListResponse.setResultType(ResultType.S);
-            createListResponse.setErrorCode(ErrCode.OK);
-            createListResponse.setError(ErrCode.OK.getError());
-            createListResponse.setBody(ToDoListMapper.convertToDto(savedToDoList));
+                // DB에 저장
+                listRepository.save(toDoList);
+
+                return getToDoLists(userId);
         }
 
-        // ToDoList 도메인 -> ToDoList 아이디, 이름이 담긴 Dto
-        return createListResponse;
+        return toDoListsResponse;
     }
 
     /**
      [getToDoLists]: 특정 유저가 소유한 ToDoList를 모두 조회하는 서비스
      userId: ToDoList를 조회할 유저의 아이디
      **/
-    public List<ToDoListDto> getToDoLists(String userId){
-
-        // 유저 조회 및 검증
-        User user = verificationService.foundUser(userId);
+    public ToDoListsResponse getToDoLists(String userId){
 
         List<ToDoList> toDoLists = listRepository.findByUser_UserIdOrderByCreatedDateAsc(userId);
 
-        return ToDoListMapper.convertToDtoList(toDoLists);
+        ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
+
+        toDoListsResponse.setResultType(ResultType.S);
+        toDoListsResponse.setBody(ToDoListMapper.convertToDtoList(toDoLists));
+        toDoListsResponse.setErrorCode(ErrCode.OK);
+        toDoListsResponse.setError(ErrCode.OK.getError());
+
+        return toDoListsResponse;
     }
 
     /**
@@ -97,19 +101,19 @@ public class ListService {
      userId: ToDoList를 조회할 유저의 아이디
      listId: 조회할 ToDoList의 아이디
      **/
-    public ToDoListDto getToDoList(String userId, String listId){
-
-        // 접근한 ToDoList에 대해 접근자와 소유자가 동일한지 검증
-        verificationService.checkListUser(
-                userId,
-                listId
-        );
-
-        // ToDoList 조회 및 검증
-        ToDoList selectList = verificationService.foundList(listId);
-        return ToDoListMapper.convertToDto(selectList);
-
-    }
+//    public ToDoListDto getToDoList(String userId, String listId){
+//
+//        // 접근한 ToDoList에 대해 접근자와 소유자가 동일한지 검증
+//        verificationService.checkListUser(
+//                userId,
+//                listId
+//        );
+//
+//        // ToDoList 조회 및 검증
+//        ToDoList selectList = verificationService.foundList(listId);
+//        return ToDoListMapper.convertToDto(selectList);
+//
+//    }
 
 
     /**
@@ -118,26 +122,58 @@ public class ListService {
      listId: 변경할 ToDoList의 아이디
      changeListNameRequest: 바꿀 이름
      **/
-    public ToDoListDto changeListName(String userId,String listId,ChangeListNameRequest changeListNameRequest){
+    public ToDoListsResponse changeListName(String userId,String listId,ChangeListNameRequest changeListNameRequest){
+
+        ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
+
+        String listName = changeListNameRequest.getChangeListName();
 
         // 변경할 ToDoList에 대해 접근자와 소유자가 동일한지 검증
-        verificationService.checkListUser(
+        boolean isOwner = verificationService.checkListUser(
                 userId,
                 listId
         );
 
-        // 변경할 이름이 중복되는지 검증 (해당 유저에 한해)
-        verificationService.checkListNameDuplicate(
-                userId,
-                changeListNameRequest.getChangeListName()
-        );
+        // 소유자가 아닌 경우
+        if (!isOwner) {
+            toDoListsResponse.setResultType(ResultType.F);
+            toDoListsResponse.setErrorCode(ErrCode.AE_001);
+            toDoListsResponse.setError(ErrCode.AE_001.getError());
+            toDoListsResponse.setBody(new ToDoListsDto());
+        } else {
+            // 리스트 이름 검증
+            ErrCode checkRes = verificationService.checkListNameOk(userId, listName);
 
-        ToDoList updateToDoList = verificationService.foundList(listId);
+            // 검증 결과에 따른 처리
+            switch (checkRes) {
+                // 이름 중복
+                case LIE_001:
+                    toDoListsResponse.setResultType(ResultType.F);
+                    toDoListsResponse.setErrorCode(ErrCode.LIE_001);
+                    toDoListsResponse.setError(ErrCode.LIE_001.getError());
+                    toDoListsResponse.setBody(new ToDoListsDto());
+                    break;
 
-        // ToDoList 이름 변경
-        updateToDoList.setListName(changeListNameRequest.getChangeListName());
-        ToDoList saveList = listRepository.save(updateToDoList);
-        return ToDoListMapper.convertToDto(saveList);
+                // 잘못된 형식의 이름
+                case LIE_002:
+                    toDoListsResponse.setResultType(ResultType.F);
+                    toDoListsResponse.setErrorCode(ErrCode.LIE_002);
+                    toDoListsResponse.setError(ErrCode.LIE_002.getError());
+                    toDoListsResponse.setBody(new ToDoListsDto());
+                    break;
+
+                // 정상
+                case OK:
+                    ToDoList updateToDoList = verificationService.foundList(listId);
+
+                    // ToDoList 이름 변경
+                    updateToDoList.setListName(changeListNameRequest.getChangeListName());
+                    listRepository.save(updateToDoList);
+
+                    return getToDoLists(userId);
+            }
+        }
+        return toDoListsResponse;
     }
 
     /**
@@ -145,15 +181,29 @@ public class ListService {
      userId: ToDoList 삭제 요청한 유저의 아이디
      listId: 삭제할 ToDoList의 아이디
      **/
-    public void deleteToDoList(String userId, String listId) throws IOException{
-
+    public ToDoListsResponse deleteToDoList(String userId, String listId) throws IOException{
         // 삭제할 ToDoList에 대해 접근자와 소유자가 동일한지 검증
-        verificationService.checkListUser(
+        boolean isOwner = verificationService.checkListUser(
                 userId,
                 listId
         );
 
-        // ToDoList 삭제
-        listRepository.deleteById(listId);
+        // 검증 완료
+        if (isOwner) {
+            listRepository.deleteById(listId);
+
+            return getToDoLists(userId);
+
+        // 검증 실패
+        } else {
+            ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
+
+            toDoListsResponse.setResultType(ResultType.F);
+            toDoListsResponse.setErrorCode(ErrCode.AE_001);
+            toDoListsResponse.setError(ErrCode.AE_001.getError());
+            toDoListsResponse.setBody(new ToDoListsDto());
+
+            return toDoListsResponse;
+        }
     }
 }

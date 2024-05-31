@@ -16,7 +16,7 @@ const StyledDiv = styled.div`
   background-color: ${props=>props.isEditing?"rgba(100, 0, 0, 0.1)":"rgba(0, 0, 0, 0.1)"};
 `
 
-const TodoList = ({ className, listId, text, isEditing, getToDoListData, deleteTodoList }) => {
+const TodoList = ({ className, listId, text, isEditing, setTodoLists, deleteTodoList }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [ETitle, setETitle] = useState(text);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -73,19 +73,19 @@ const TodoList = ({ className, listId, text, isEditing, getToDoListData, deleteT
 
   const _deleteTodoList = async() => {
     console.log(`Try to delete listId:${listId}`)
-    try{
-      setDeleteLoading(true)
-      const res = await axios.delete(`/api/v1/list/${listId}`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-        }
-      });
-      deleteTodoList(listId)
-      setDeleteLoading(false)
-    } catch(e) {
-      switch(e.response.status){
-        case 404:
-          getToDoListData();
+    setDeleteLoading(true)
+    const res = await axios.delete(`/api/v1/list/${listId}`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+      }
+    });
+
+    if(res.data.resultType === "S") {
+      setTodoLists(res.data.body.toDoListDto)
+    } else if(res.data.resultType === "F") {
+      switch(res.data.errorCode){
+        case "AE_001":
+          alert("잘못된 접근입니다.");
           break;
         default:
           alert("오?류")
@@ -96,19 +96,33 @@ const TodoList = ({ className, listId, text, isEditing, getToDoListData, deleteT
 
   const changeTodoListTitle = async() => {
     console.log(`Try to change title ${text} to ${ETitle} listId:${listId}`)
-    try{
-      const res = await axios.put(`/api/v1/list/${listId}`, 
-      {
-        changeListName:ETitle, //변경될 이름
-      }, 
-      {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-        }
-      });
+    const res = await axios.put(`/api/v1/list/${listId}`, 
+    {
+      changeListName:ETitle, //변경될 이름
+    }, 
+    {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+      }
+    });
+    if(res.data.resultType === "S") {
       setIsEditingTitle(false);
-      getToDoListData();
-    } catch(e) {
+      setTodoLists(res.data.body.toDoListDto);
+    } else if(res.data.resultType === "F") {
+      switch(res.data.errorCode) {
+        case "AE_001":
+          alert("잘못된 접근입니다.");
+          break;
+        case "LIE_001":
+          alert("이미 존재하는 이름입니다.");
+          break;
+        case "LIE_002":
+          alert("잘못된 이름입니다.");
+          break;
+        default:
+          alert("오?류");
+          break;
+      }
     }
   }
 

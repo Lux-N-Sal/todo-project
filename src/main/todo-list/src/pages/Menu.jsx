@@ -48,13 +48,15 @@ const Menu = () => {
       }
     })
     if (res.data.resultType === "S"){
-      getToDoListData();
-      setToDoLists(pre=>[...pre, res.data.body])
+      setToDoLists(res.data.body.toDoListDto)
       expendInput();
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode){
         case "LIE_001":
-          alert("이미 존재하는 리스트 이름입니다.")
+          alert("이미 존재하는 이름입니다.")
+          break;
+        case "LIE_002":
+          alert("잘못된 이름입니다.");
           break;
         default:
           alert("오?류");
@@ -66,18 +68,12 @@ const Menu = () => {
 
   const getToDoListData = async() => {
     if ((sessionStorage.getItem("accessToken") != null) && toDoLists.length === 0) {
-      let res;
-      try{
-        res = await axios.get("/api/v1/list/lists", {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-          }
-        });
-        setToDoLists(res.data)
-      } catch(err) {
-        console.log(err.response?.data);
-      }
-      
+      const res = await axios.get("/api/v1/list/lists", {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+        }
+      });
+      setToDoLists(res.data.body.toDoListDto)
     }
   };
 
@@ -122,7 +118,7 @@ const Menu = () => {
           listId={toDoList.listId}
           text={toDoList.listName}
           isEditing={isEditing}
-          getToDoListData = {getToDoListData}
+          setTodoLists = {setToDoLists}
           deleteTodoList={deleteTodoList}
         />)
     )

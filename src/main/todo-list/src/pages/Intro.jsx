@@ -18,51 +18,51 @@ const Intro = ({setIsLoading}) => {
 
   const getMainInfo = async() => {
     if(sessionStorage.getItem("accessToken") != null) {
-      try {
-        const res = await axios.get("/api/v1/user/main", 
-          {headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}})
+      const res = await axios.get("/api/v1/user/main", 
+        {headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}})
 
-        setUserName(res.data.userName);
-        setMainList(res.data.mainToDoListId);
-        setTempMainList(res.data.mainToDoListId);
+      if(res.data.resultType === "S") {
+        setUserName(res.data.body.userName);
+        setMainList(res.data.body.mainToDoListId);
+        setTempMainList(res.data.body.mainToDoListId);
         setLogined(true);
-      } catch(err) {
-        console.log(err)
+      } else if(res.data.resultType === "F") {
+        console.log(res.data.error)
       }
     }
   }
 
   const getTodoLists = async() => {
     if (sessionStorage.getItem("accessToken") != null) {
-      let res;
-      try{
-        res = await axios.get("/api/v1/list/lists", {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-          }
-        });
-        setTodoLists(res.data)
-      } catch(err) {
-        console.log(err.response?.data);
+      const res = await axios.get("/api/v1/list/lists", {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+        }
+      });
+      if(res.data.resultType === "S"){
+        setTodoLists(res.data.body.toDoListDto)
+      } else if(res.data.resultType === "F") {
+        console.log(res.data.error)
       }
       
     }
   }
 
   const changeMainList = async() => {
-    try{
-      setLoading(true)
-      const res = await axios.put("/api/v1/user/main",
-        {mainToDoListId:tempMainList},
-        {headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}}
-      )
-      setMainList(tempMainList)
-      getMainInfo();
-      setLoading(false)
+    setLoading(true)
+    const res = await axios.put("/api/v1/user/main",
+      {mainToDoListId:tempMainList},
+      {headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}}
+    )
+    if(res.data.resultType === "S"){
+      setMainList(res.data.body.toDoListDto)
+      setTempMainList(res.data.body.toDoListDto)
+      
       setSetting(false)
-    } catch(e) {
-      console.log(e)
+    } else if(res.data.resultType === "F") {
+      console.log(res.data.error)
     }
+    setLoading(false)
   }
 
   useEffect(() => {

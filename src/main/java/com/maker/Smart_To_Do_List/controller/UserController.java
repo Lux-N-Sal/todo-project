@@ -4,10 +4,7 @@ package com.maker.Smart_To_Do_List.controller;
 import com.maker.Smart_To_Do_List.domain.User;
 import com.maker.Smart_To_Do_List.dto.*;
 import com.maker.Smart_To_Do_List.exception.AppException;
-import com.maker.Smart_To_Do_List.response.JoinIdDupResponse;
-import com.maker.Smart_To_Do_List.response.JoinResponse;
-import com.maker.Smart_To_Do_List.response.JoinUserNameDupResponse;
-import com.maker.Smart_To_Do_List.response.LoginResponse;
+import com.maker.Smart_To_Do_List.response.*;
 import com.maker.Smart_To_Do_List.service.JwtService;
 import com.maker.Smart_To_Do_List.service.ListService;
 import com.maker.Smart_To_Do_List.service.UserService;
@@ -50,7 +47,6 @@ public class UserController {
         final JoinResponse joinResponse = userService.join(
                 joinDto.getLoginId(),
                 joinDto.getLoginPw(),
-                joinDto.getLoginPwCheck(),
                 joinDto.getUserName(),
                 joinDto.getUserEmail()
         );
@@ -70,11 +66,11 @@ public class UserController {
      ?:                 유저 아이디 중복 검사 결과 ([수정할 사항]  <?>로 돼있지만, <Boolean>으로 바꿔도 될 듯?)
      **/
     @PostMapping("/join/id")
-    public ResponseEntity<JoinIdDupResponse> checkLoginId(@RequestBody CheckLoginIdDto checkLoginIdDto){
+    public ResponseEntity<EmptyResponse> checkLoginId(@RequestBody CheckLoginIdDto checkLoginIdDto){
         // 유저 아이디 중복 검사
-        final JoinIdDupResponse joinIdDupResponse = verificationService.checkLoginIdDup(checkLoginIdDto.getLoginId());
+        final EmptyResponse emptyResponse = verificationService.checkLoginIdDup(checkLoginIdDto.getLoginId());
 
-        return new ResponseEntity<>(joinIdDupResponse, HttpStatus.OK);
+        return new ResponseEntity<>(emptyResponse, HttpStatus.OK);
     }
 
     /**
@@ -89,11 +85,11 @@ public class UserController {
      ?:                 유저 이름 중복 검사 결과 ([수정할 사항]  <?>로 돼있지만, <Boolean>으로 바꿔도 될 듯?)
      **/
     @PostMapping("/join/username")
-    public ResponseEntity<JoinUserNameDupResponse> checkUserName(@RequestBody CheckUserNameDto checkUserNameDto){
+    public ResponseEntity<EmptyResponse> checkUserName(@RequestBody CheckUserNameDto checkUserNameDto){
         // 유저 이름 중복 검사
-        final JoinUserNameDupResponse joinUserNameDupResponse = verificationService.checkUserNameDup(checkUserNameDto.getUserName());
+        final EmptyResponse emptyResponse = verificationService.checkUserNameDup(checkUserNameDto.getUserName());
 
-        return new ResponseEntity<>(joinUserNameDupResponse, HttpStatus.OK);
+        return new ResponseEntity<>(emptyResponse, HttpStatus.OK);
     }
 
     /**
@@ -144,16 +140,15 @@ public class UserController {
      ?:             유저 정보 ([수정할 사항]  <?>로 돼있지만, <UserDto>로 바꿔도 될 듯?)
      **/
     @GetMapping("/info")
-    public ResponseEntity<?> getInfo(HttpServletRequest request){
+    public ResponseEntity<UserInfoResponse> getInfo(HttpServletRequest request){
         // 요청 헤더에 담긴 Access Token을 통해 유저 조회
         User user = jwtService.getUser(request);
 
-        request.getCookies();
+        // 조회된 유저에서 유저 정보를 추출해 Response로 생성
+        UserInfoResponse userInfoResponse = userService.getInfo(user);
 
 
-        // 조회된 유저에서 유저 정보를 추출해 Dto로 생성
-        UserInfoDto userDto = userService.getInfo(user);
-        return new ResponseEntity<>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(userInfoResponse, HttpStatus.OK);
     }
 
     /**
@@ -170,18 +165,18 @@ public class UserController {
      ?:                     패스워드 변경 성공 Text ([수정할 사항]  <?>로 돼있지만, <String>으로 바꿔도 될 듯?)
      **/
     @PutMapping("/info")
-    public ResponseEntity<?> changePassword(HttpServletRequest request,
+    public ResponseEntity<EmptyResponse> changePassword(HttpServletRequest request,
                                             @RequestBody ChangePasswordRequest changePasswordRequest){
         // 요청 헤더에 담긴 Access Token을 통해 유저 조회
         String userId = jwtService.getUserId(request);
 
         // 패스워드 변경 서비스
-        User updateUser = userService.changePassword(
+        EmptyResponse emptyResponse = userService.changePassword(
                 userId,
                 changePasswordRequest
         );
 
-        return new ResponseEntity<>("Success", HttpStatus.OK);
+        return new ResponseEntity<>(emptyResponse, HttpStatus.OK);
     }
 
     /**
@@ -222,14 +217,14 @@ public class UserController {
      ?:                 메인 ToDoList와 유저이름이 담긴 Dto ([수정할 사항]  <?>로 돼있지만, <ShowMainDto>로 바꿔도 될 듯?)
      **/
     @GetMapping("/main")
-    public ResponseEntity<?> getMainToDoList(HttpServletRequest request){
+    public ResponseEntity<MainTodoResponse> getMainToDoList(HttpServletRequest request){
         // 요청 헤더에 담긴 Access Token을 통해 유저 조회
         String userId = jwtService.getUserId(request);
 
         // 메인 ToDoList 조회 서비스
-        ShowMainDto showMainDto = userService.getMainToDoListId(userId);
+        MainTodoResponse mainTodoResponse = userService.getMainToDoListId(userId);
 
-        return new ResponseEntity<>(showMainDto, HttpStatus.OK);
+        return new ResponseEntity<>(mainTodoResponse, HttpStatus.OK);
     }
 
 
@@ -247,17 +242,17 @@ public class UserController {
      ?:                     메인 TodoList 아이디 ([수정할 사항]  <?>로 돼있지만, <Long>으로 바꿔도 될 듯?)
      **/
     @PutMapping("/main")
-    public ResponseEntity<?> updateMainToDoList (HttpServletRequest request,
+    public ResponseEntity<MainTodoResponse> updateMainToDoList (HttpServletRequest request,
                                                  @RequestBody ChangeMainListId changeMainListId){
         // 요청 헤더에 담긴 Access Token을 통해 유저 조회
         String userId = jwtService.getUserId(request);
 
         // 메인 ToDoList 변경 서비스
-        User updateUser = userService.updateMainToDoListId(
+        MainTodoResponse mainTodoResponse = userService.updateMainToDoListId(
                 userId,
                 changeMainListId);
 
-        return new ResponseEntity<>(updateUser.getMainToDoListId(), HttpStatus.OK);
+        return new ResponseEntity<>(mainTodoResponse, HttpStatus.OK);
     }
 
     /**

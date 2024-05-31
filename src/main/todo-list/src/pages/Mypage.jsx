@@ -21,16 +21,15 @@ const Mypage = ({setIsLoading}) => {
 
   const getUserInfo = async() => {
     setIsLoading(true)
-    let res;
-    try {
-      res = await axios.get(`/api/v1/user/info`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-        }
-      });
-      setUserInfo(res.data)
-    } catch(err) {
-      console.log(err.response.data)
+    const res = await axios.get(`/api/v1/user/info`, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
+      }
+    });
+    if (res.data.resultType === "S") {
+      setUserInfo(res.data.body)
+    } else if(res.data.resultType === "F") {
+      console.log(res.data.error)
     } 
     setIsLoading(false)
   }

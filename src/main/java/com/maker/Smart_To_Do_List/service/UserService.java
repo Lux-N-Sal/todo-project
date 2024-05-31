@@ -8,8 +8,7 @@ import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.mapper.UserMapper;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
-import com.maker.Smart_To_Do_List.response.JoinResponse;
-import com.maker.Smart_To_Do_List.response.LoginResponse;
+import com.maker.Smart_To_Do_List.response.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -173,9 +172,16 @@ public class UserService {
 
      return:    유저 정보 (UserInfoDto)
      **/
-    public UserInfoDto getInfo(User user){
-        // 유저 도메인 -> 유저 Dto 변환
-        return UserMapper.convertToDto(user);
+    public UserInfoResponse getInfo(User user){
+        // 객체 생성
+        UserInfoResponse userInfoResponse = new UserInfoResponse();
+
+        userInfoResponse.setResultType(ResultType.S);
+        userInfoResponse.setErrorCode(ErrCode.OK);
+        userInfoResponse.setError(ErrCode.OK.getError());
+        userInfoResponse.setBody(UserMapper.convertToDto(user));
+
+        return userInfoResponse;
     }
 
     /**
@@ -183,26 +189,32 @@ public class UserService {
      userId:                서비스를 이용할 유저의 아이디
      changePasswordRequest: 현재 패스워드와 변경할 패스워드가 담긴 Dto
 
-     return:                유저 (User)
-
-     AppException:          패스워드가 틀린 경우
+     return:                EmptyResponse (성공 or 실패)
      **/
-    public User changePassword(String userId, ChangePasswordRequest changePasswordRequest){
+    public EmptyResponse changePassword(String userId, ChangePasswordRequest changePasswordRequest){
 
+        EmptyResponse emptyResponse  = new EmptyResponse();
         // 유저 아이디 검증 및 유저 조회
-        User updateUser = verificationService.foundUser(userId);
+        User user = verificationService.findUser(userId);
 
-        // 유저 패스워드가 옳바른지 검증 (verificationService.checkPassword()랑 기능이 같나?)
-        if(!encoder.matches(changePasswordRequest.getPassword(),updateUser.getLoginPw())){
-            // 틀렸다면 예외처리
-            throw new AppException(ErrorCode.INVALID_PASSWORD, "The password is wrong.");
+        // 유저 패스워드가 옳바른지 검증 (verificationService.checkPassword()랑 기능이 같나? ㅇㅇ)
+        if(verificationService.checkListNameDuplicate(changePasswordRequest.getPassword(), user.getLoginPw())){
+            // 신규 패스워드로 업데이트
+            user.setLoginPw(encoder.encode(changePasswordRequest.getChangePassword()));
+
+            emptyResponse.setResultType(ResultType.S);
+            emptyResponse.setError(ErrCode.OK.getError());
+            emptyResponse.setErrorCode(ErrCode.OK);
+
+            // DB에 저장
+            userRepository.save(user);
+        } else {
+            emptyResponse.setResultType(ResultType.F);
+            emptyResponse.setError(ErrCode.AE_002.getError());
+            emptyResponse.setErrorCode(ErrCode.AE_002);
         }
 
-        // 신규 패스워드로 업데이트
-        updateUser.setLoginPw(encoder.encode(changePasswordRequest.getChangePassword()));
-
-        // DB에 저장
-        return userRepository.save(updateUser);
+        return emptyResponse;
     }
 
     /**
@@ -225,14 +237,21 @@ public class UserService {
      [getMainToDoListId]:   메인화면에 표시될 ToDoList 조회 서비스
      userId:                서비스를 이용할 유저의 아이디
 
-     return:                메인화면에 표시될 ToDoList의 아이디, 유저 이름이 담긴 Dto (ShowMainDto)
+     return:                메인화면에 표시될 ToDoList의 아이디, 유저 이름이 담긴 Response (MainTodoResponse)
      **/
-    public ShowMainDto getMainToDoListId(String userId){
+    public MainTodoResponse getMainToDoListId(String userId){
         // 유저 아이디 검증 및 유저 조회
-        User selectedUser = verificationService.foundUser(userId);
+        User selectedUser = verificationService.findUser(userId);
+
+        MainTodoResponse mainTodoResponse = new MainTodoResponse();
 
         // 유저정보에서 유저 이름, 메인화면에 표시될 ToDoList의 아이디를 추출하여 ShowMainDto형태로 변환
-        return UserMapper.convertToMain(selectedUser);
+        mainTodoResponse.setBody(UserMapper.convertToMain(selectedUser));
+        mainTodoResponse.setResultType(ResultType.S);
+        mainTodoResponse.setError(ErrCode.OK.getError());
+        mainTodoResponse.setErrorCode(ErrCode.OK);
+
+        return mainTodoResponse;
     }
 
     /**
@@ -240,17 +259,26 @@ public class UserService {
      userId:                    서비스를 이용할 유저의 아이디
      changeMainListId:          변경할 ToDoList의 아이디
 
-     return:                    유저 (User) (ShowMainDto를 반환하면 어떨까?)
+     return:                    메인화면에 표시될 ToDoList의 아이디, 유저 이름이 담긴 Response (MainTodoResponse)
      **/
-    public User updateMainToDoListId(String userId, ChangeMainListId changeMainListId){
+    public MainTodoResponse updateMainToDoListId(String userId, ChangeMainListId changeMainListId){
         // 유저 아이디 검증 및 유저 조회
-        User updateUser = verificationService.foundUser(userId);
-        
+        User user = verificationService.findUser(userId);
+
+        MainTodoResponse mainTodoResponse = new MainTodoResponse();
+
+        mainTodoResponse.setBody(UserMapper.convertToMain(user));
+        mainTodoResponse.setResultType(ResultType.S);
+        mainTodoResponse.setError(ErrCode.OK.getError());
+        mainTodoResponse.setErrorCode(ErrCode.OK);
+
         // 메인화면에 표시될 ToDoList 업데이트
-        updateUser.setMainToDoListId(changeMainListId.getMainToDoListId());
-        
+        user.setMainToDoListId(changeMainListId.getMainToDoListId());
+
         // DB에 저장
-        return userRepository.save(updateUser);
+        userRepository.save(user);
+
+        return mainTodoResponse;
     }
 
     /**

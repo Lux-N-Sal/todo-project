@@ -38,7 +38,7 @@ const Menu = () => {
 
   const onChangeToDoListName = (e) => setToDoListName(e.target.value);
 
-  const addToDoList = async() => {
+  const createToDoList = async() => {
     setAddListLoading(true);
     const res = await axios.post("/api/v1/list/create", 
     { listName: toDoListName }, 
@@ -48,7 +48,7 @@ const Menu = () => {
       }
     })
     if (res.data.resultType === "S"){
-      setToDoLists(res.data.body.toDoListDto)
+      setToDoLists(pre=>[...pre, res.data.body])
       expendInput();
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode){
@@ -232,7 +232,7 @@ const Menu = () => {
                       <Spinner styles={{fontSize:"24px", x:"80%"}}/>:
                       <motion.span
                         className={`material-symbols-outlined`}
-                        onClick={addToDoList}
+                        onClick={createToDoList}
                         initial={{
                           color:"rgb(0, 0, 0)",
                           pointer: "cursor",

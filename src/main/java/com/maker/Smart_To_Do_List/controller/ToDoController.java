@@ -7,6 +7,8 @@ import com.maker.Smart_To_Do_List.exception.AppException;
 import com.maker.Smart_To_Do_List.exception.ErrorCode;
 import com.maker.Smart_To_Do_List.mapper.ToDoMapper;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
+import com.maker.Smart_To_Do_List.response.TodoResponse;
+import com.maker.Smart_To_Do_List.response.TodosResponse;
 import com.maker.Smart_To_Do_List.service.JwtService;
 import com.maker.Smart_To_Do_List.service.ToDoService;
 import com.maker.Smart_To_Do_List.service.UserService;
@@ -41,16 +43,16 @@ public class ToDoController {
      [createToDo]:  todo 생성 API
      **/
     @PostMapping("/{listId}/create")
-    public ResponseEntity<ToDoDto> createToDo(HttpServletRequest request,
-                                             @RequestBody CreateToDoRequest createToDoDto,
-                                             @PathVariable("listId") final String listId){
+    public ResponseEntity<TodoResponse> createToDo(HttpServletRequest request,
+                                                   @RequestBody CreateToDoRequest createToDoDto,
+                                                   @PathVariable("listId") final String listId){
 
         // 로그인한 jwt 토큰을 통해 userId 추출
         String userId = jwtService.getUserId(request);
 
         // todo 생성함수 호출
         // 실질적인 생성은 todoService의 creatToDo가 한다.
-        ToDoDto toDoDto = toDoService.createToDo(
+        TodoResponse todoResponse = toDoService.createToDo(
                 userId,
                 listId,
                 createToDoDto
@@ -58,7 +60,7 @@ public class ToDoController {
         );
 
         // 200과 생성 성공을 반환
-        return new ResponseEntity<>(toDoDto, HttpStatus.OK);
+        return new ResponseEntity<>(todoResponse, HttpStatus.OK);
     }
 
     /**
@@ -66,14 +68,14 @@ public class ToDoController {
      [getToDos]: 특정 list의 todo를 전부 반환
      **/
     @GetMapping(value = "/{listId}/todos", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> getToDos(@PathVariable("listId") final String listId,
-                                                        HttpServletRequest request){
+    public ResponseEntity<TodosResponse> getToDos(@PathVariable("listId") final String listId,
+                                                  HttpServletRequest request){
         
         // 로그인한 jwt 토큰을 통해 userId 추출
         String userId = jwtService.getUserId(request);
 
         // todo들, list정보를 반환
-        Map<String, Object> result = toDoService.getToDos(
+        TodosResponse result = toDoService.getToDos(
                 userId,
                 listId
         );

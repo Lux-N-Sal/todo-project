@@ -10,6 +10,7 @@ import com.maker.Smart_To_Do_List.enums.ResultType;
 import com.maker.Smart_To_Do_List.mapper.ToDoListMapper;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
+import com.maker.Smart_To_Do_List.response.ToDoListResponse;
 import com.maker.Smart_To_Do_List.response.ToDoListsResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -34,10 +35,10 @@ public class ListService {
      listName: 리스트 이름
      userId: 생성한 유저의 아이디
      **/
-    public ToDoListsResponse createList(String listName, String userId){
+    public ToDoListResponse createList(String listName, String userId){
 
         // 빈 ToDoListsResponse 객체 생성
-        ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
+        ToDoListResponse toDoListResponse = new ToDoListResponse();
 
         // 리스트 이름 검증
         ErrCode checkRes = verificationService.checkListNameOk(userId, listName);
@@ -46,18 +47,18 @@ public class ListService {
         switch (checkRes) {
             // 이름 중복
             case LIE_001:
-                toDoListsResponse.setResultType(ResultType.F);
-                toDoListsResponse.setErrorCode(ErrCode.LIE_001);
-                toDoListsResponse.setError(ErrCode.LIE_001.getError());
-                toDoListsResponse.setBody(new ToDoListsDto());
+                toDoListResponse.setResultType(ResultType.F);
+                toDoListResponse.setErrorCode(ErrCode.LIE_001);
+                toDoListResponse.setError(ErrCode.LIE_001.getError());
+                toDoListResponse.setBody(new ToDoListDto());
                 break;
 
             // 잘못된 형식의 이름
             case LIE_002:
-                toDoListsResponse.setResultType(ResultType.F);
-                toDoListsResponse.setErrorCode(ErrCode.LIE_002);
-                toDoListsResponse.setError(ErrCode.LIE_002.getError());
-                toDoListsResponse.setBody(new ToDoListsDto());
+                toDoListResponse.setResultType(ResultType.F);
+                toDoListResponse.setErrorCode(ErrCode.LIE_002);
+                toDoListResponse.setError(ErrCode.LIE_002.getError());
+                toDoListResponse.setBody(new ToDoListDto());
                 break;
 
             // 정상
@@ -70,12 +71,15 @@ public class ListService {
                         .build();
 
                 // DB에 저장
-                listRepository.save(toDoList);
-
-                return getToDoLists(userId);
+                ToDoList savedTodo = listRepository.save(toDoList);
+                toDoListResponse.setResultType(ResultType.S);
+                toDoListResponse.setErrorCode(ErrCode.OK);
+                toDoListResponse.setError(ErrCode.OK.getError());
+                toDoListResponse.setBody(ToDoListMapper.convertToDto(savedTodo));
+                break;
         }
 
-        return toDoListsResponse;
+        return toDoListResponse;
     }
 
     /**

@@ -266,21 +266,21 @@ public class UserController {
      String:                AccessToken
      **/
     @GetMapping("/refresh")
-    public ResponseEntity<String> refresh(HttpServletRequest request) throws AuthenticationException {
+    public ResponseEntity<RefreshResponse> refresh(HttpServletRequest request) throws AuthenticationException {
         Cookie[] cookies = request.getCookies();
 
-        String cookieValue = null;
+        String refreshToken = null;
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals("refreshToken")) {
-                    cookieValue = cookie.getValue();
+                    refreshToken = cookie.getValue();
                     break;
                 }
             }
         }
 
-        String accessToken = userService.refresh(cookieValue);
+        RefreshResponse refreshResponse = userService.refresh(refreshToken);
 
-        return new ResponseEntity<>(accessToken, HttpStatus.OK);
+        return new ResponseEntity<>(refreshResponse, HttpStatus.OK);
     }
 }

@@ -4,6 +4,7 @@ package com.maker.Smart_To_Do_List.controller;
 
 import com.maker.Smart_To_Do_List.dto.ChangeListNameRequest;
 import com.maker.Smart_To_Do_List.dto.CreateListRequest;
+import com.maker.Smart_To_Do_List.response.EmptyResponse;
 import com.maker.Smart_To_Do_List.response.ToDoListResponse;
 import com.maker.Smart_To_Do_List.response.ToDoListsResponse;
 import com.maker.Smart_To_Do_List.service.JwtService;
@@ -71,17 +72,17 @@ public class ListController {
      * [changeToDoListName]: 투두리스트 이름 변경 API
      * **/
     @PutMapping("/{listId}")
-    public ResponseEntity<ToDoListsResponse> changeToDoListName(HttpServletRequest request,
-                                                @RequestBody ChangeListNameRequest changeListNameRequest,
-                                                @PathVariable("listId") final String listId){
+    public ResponseEntity<EmptyResponse> changeToDoListName(HttpServletRequest request,
+                                                            @RequestBody ChangeListNameRequest changeListNameRequest,
+                                                            @PathVariable("listId") final String listId){
         // 사용자 검증
         String userId = jwtService.getUserId(request);
-        ToDoListsResponse toDoListsResponse = listService.changeListName(
+        EmptyResponse emptyResponse = listService.changeListName(
                 userId,
                 listId,
                 changeListNameRequest
         );
-        return new ResponseEntity<>(toDoListsResponse, HttpStatus.OK);
+        return new ResponseEntity<>(emptyResponse, HttpStatus.OK);
     }
 
     /**
@@ -89,13 +90,13 @@ public class ListController {
      * [deleteToDoList]: 리스트 삭제
      * **/
     @DeleteMapping("/{listId}")
-    public ResponseEntity<ToDoListsResponse> deleteToDoList(HttpServletRequest request,
+    public ResponseEntity<EmptyResponse> deleteToDoList(HttpServletRequest request,
                                                @PathVariable("listId") final String listId) throws IOException{
         String userId = jwtService.getUserId(request);
-        ToDoListsResponse toDoListsResponse = listService.deleteToDoList(
+        EmptyResponse emptyResponse = listService.deleteToDoList(
                 userId,
                 listId
         );
-        return new ResponseEntity<>(toDoListsResponse, HttpStatus.OK);
+        return new ResponseEntity<>(emptyResponse, HttpStatus.OK);
     }
 }

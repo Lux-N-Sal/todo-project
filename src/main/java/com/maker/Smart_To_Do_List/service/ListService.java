@@ -10,6 +10,7 @@ import com.maker.Smart_To_Do_List.enums.ResultType;
 import com.maker.Smart_To_Do_List.mapper.ToDoListMapper;
 import com.maker.Smart_To_Do_List.repository.ListRepository;
 import com.maker.Smart_To_Do_List.repository.UserRepository;
+import com.maker.Smart_To_Do_List.response.EmptyResponse;
 import com.maker.Smart_To_Do_List.response.ToDoListResponse;
 import com.maker.Smart_To_Do_List.response.ToDoListsResponse;
 import lombok.RequiredArgsConstructor;
@@ -126,9 +127,9 @@ public class ListService {
      listId: 변경할 ToDoList의 아이디
      changeListNameRequest: 바꿀 이름
      **/
-    public ToDoListsResponse changeListName(String userId,String listId,ChangeListNameRequest changeListNameRequest){
+    public EmptyResponse changeListName(String userId, String listId, ChangeListNameRequest changeListNameRequest){
 
-        ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
+        EmptyResponse emptyResponse = new EmptyResponse();
 
         String listName = changeListNameRequest.getChangeListName();
 
@@ -140,10 +141,9 @@ public class ListService {
 
         // 소유자가 아닌 경우
         if (!isOwner) {
-            toDoListsResponse.setResultType(ResultType.F);
-            toDoListsResponse.setErrorCode(ErrCode.AE_001);
-            toDoListsResponse.setError(ErrCode.AE_001.getError());
-            toDoListsResponse.setBody(new ToDoListsDto());
+            emptyResponse.setResultType(ResultType.F);
+            emptyResponse.setErrorCode(ErrCode.AE_001);
+            emptyResponse.setError(ErrCode.AE_001.getError());
         } else {
             // 리스트 이름 검증
             ErrCode checkRes = verificationService.checkListNameOk(userId, listName);
@@ -152,18 +152,16 @@ public class ListService {
             switch (checkRes) {
                 // 이름 중복
                 case LIE_001:
-                    toDoListsResponse.setResultType(ResultType.F);
-                    toDoListsResponse.setErrorCode(ErrCode.LIE_001);
-                    toDoListsResponse.setError(ErrCode.LIE_001.getError());
-                    toDoListsResponse.setBody(new ToDoListsDto());
+                    emptyResponse.setResultType(ResultType.F);
+                    emptyResponse.setErrorCode(ErrCode.LIE_001);
+                    emptyResponse.setError(ErrCode.LIE_001.getError());
                     break;
 
                 // 잘못된 형식의 이름
                 case LIE_002:
-                    toDoListsResponse.setResultType(ResultType.F);
-                    toDoListsResponse.setErrorCode(ErrCode.LIE_002);
-                    toDoListsResponse.setError(ErrCode.LIE_002.getError());
-                    toDoListsResponse.setBody(new ToDoListsDto());
+                    emptyResponse.setResultType(ResultType.F);
+                    emptyResponse.setErrorCode(ErrCode.LIE_002);
+                    emptyResponse.setError(ErrCode.LIE_002.getError());
                     break;
 
                 // 정상
@@ -174,10 +172,12 @@ public class ListService {
                     updateToDoList.setListName(changeListNameRequest.getChangeListName());
                     listRepository.save(updateToDoList);
 
-                    return getToDoLists(userId);
+                    emptyResponse.setResultType(ResultType.S);
+                    emptyResponse.setErrorCode(ErrCode.OK);
+                    emptyResponse.setError(ErrCode.OK.getError());
             }
         }
-        return toDoListsResponse;
+        return emptyResponse;
     }
 
     /**
@@ -185,8 +185,11 @@ public class ListService {
      userId: ToDoList 삭제 요청한 유저의 아이디
      listId: 삭제할 ToDoList의 아이디
      **/
-    public ToDoListsResponse deleteToDoList(String userId, String listId) throws IOException{
+    public EmptyResponse deleteToDoList(String userId, String listId) throws IOException{
         // 삭제할 ToDoList에 대해 접근자와 소유자가 동일한지 검증
+
+        EmptyResponse emptyResponse = new EmptyResponse();
+
         boolean isOwner = verificationService.checkListUser(
                 userId,
                 listId
@@ -196,18 +199,18 @@ public class ListService {
         if (isOwner) {
             listRepository.deleteById(listId);
 
-            return getToDoLists(userId);
+            emptyResponse.setResultType(ResultType.S);
+            emptyResponse.setErrorCode(ErrCode.OK);
+            emptyResponse.setError(ErrCode.OK.getError());
+
 
         // 검증 실패
         } else {
-            ToDoListsResponse toDoListsResponse = new ToDoListsResponse();
-
-            toDoListsResponse.setResultType(ResultType.F);
-            toDoListsResponse.setErrorCode(ErrCode.AE_001);
-            toDoListsResponse.setError(ErrCode.AE_001.getError());
-            toDoListsResponse.setBody(new ToDoListsDto());
-
-            return toDoListsResponse;
+            emptyResponse.setResultType(ResultType.F);
+            emptyResponse.setErrorCode(ErrCode.AE_001);
+            emptyResponse.setError(ErrCode.AE_001.getError());
         }
+
+        return emptyResponse;
     }
 }

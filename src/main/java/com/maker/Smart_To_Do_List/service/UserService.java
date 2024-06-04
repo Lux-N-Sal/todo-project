@@ -275,10 +275,17 @@ public class UserService {
 
      return:                    AccessToken
      **/
-    public String refresh(String refreshToken) {
+    public RefreshResponse refresh(String refreshToken) {
+        RefreshResponse refreshResponse = new RefreshResponse();
+
         JwtUtil.isExpired(refreshToken, secretKey);
         String accessToken = JwtUtil.createAccessToken(JwtUtil.getLoginId(refreshToken, secretKey), secretKey);
 
-        return accessToken;
+        refreshResponse.setBody(accessToken);
+        refreshResponse.setResultType(ResultType.S);
+        refreshResponse.setErrorCode(ErrCode.OK);
+        refreshResponse.setError(ErrCode.OK.getError());
+
+        return refreshResponse;
     }
 }

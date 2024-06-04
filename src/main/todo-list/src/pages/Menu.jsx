@@ -119,7 +119,7 @@ const Menu = () => {
           text={toDoList.listName}
           isEditing={isEditing}
           setTodoLists = {setToDoLists}
-          deleteTodoList={deleteTodoList}
+          todoLists={toDoLists}
         />)
     )
   }

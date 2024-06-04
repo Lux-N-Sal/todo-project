@@ -16,7 +16,7 @@ const StyledDiv = styled.div`
   background-color: ${props=>props.isEditing?"rgba(100, 0, 0, 0.1)":"rgba(0, 0, 0, 0.1)"};
 `
 
-const TodoList = ({ className, listId, text, isEditing, setTodoLists, deleteTodoList }) => {
+const TodoList = ({ className, listId, text, isEditing, setTodoLists, todoLists}) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [ETitle, setETitle] = useState(text);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -71,7 +71,7 @@ const TodoList = ({ className, listId, text, isEditing, setTodoLists, deleteTodo
     cursor:"pointer",
   }
 
-  const _deleteTodoList = async() => {
+  const deleteTodoList = async() => {
     console.log(`Try to delete listId:${listId}`)
     setDeleteLoading(true)
     const res = await axios.delete(`/api/v1/list/${listId}`, {
@@ -81,7 +81,7 @@ const TodoList = ({ className, listId, text, isEditing, setTodoLists, deleteTodo
     });
 
     if(res.data.resultType === "S") {
-      setTodoLists(res.data.body.toDoListDto)
+      setTodoLists(pre=>[...pre.filter(todoList=>todoList.listId !== listId)])
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode){
         case "AE_001":
@@ -107,7 +107,14 @@ const TodoList = ({ className, listId, text, isEditing, setTodoLists, deleteTodo
     });
     if(res.data.resultType === "S") {
       setIsEditingTitle(false);
-      setTodoLists(res.data.body.toDoListDto);
+      const newLists = []
+      for(var list of todoLists){
+        if (list.listId === listId) {
+          list.listName = ETitle
+        }
+        newLists.push(list)
+      }
+      setTodoLists(newLists);
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode) {
         case "AE_001":
@@ -168,7 +175,7 @@ const TodoList = ({ className, listId, text, isEditing, setTodoLists, deleteTodo
             <motion.span 
               className="material-symbols-outlined" 
               style={deleteStyle} 
-              onClick={_deleteTodoList}
+              onClick={deleteTodoList}
               whileHover={{
                 color:"rgb(250, 0, 0)", 
                 scale: 1.3

@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import axios from "axios";
 
 import styles from "../styles/TodoList.module.css";
 
@@ -12,8 +11,9 @@ import Importance from "./Importance";
 import TodoInput from "./TodoInput";
 import Button from "./Button";
 import Input from "./Input";
+import api from "../functions/api";
 
-const Todo = ({listId, todo, getTodos, deleteTodo}) => {
+const Todo = ({listId, todo, getTodos, deleteTodo, toggleDone}) => {
   const [deadline, setDeadline] = useState(new Date(Date.parse(todo.deadline)))
   const [difficulty, setDifficulty] = useState(todo.difficulty)
   const [estimatedTime, setEstimatedTime] = useState(todo.estimatedTime)
@@ -48,15 +48,13 @@ const Todo = ({listId, todo, getTodos, deleteTodo}) => {
       let convertedDate = new Date(deadline.getTime() - timezoneOffset);
 
       let formattedDate = convertedDate.toISOString().slice(0, 16);
-      const res = await axios.put(`/api/v1/list/${listId}/${todoId}`, 
+      const res = await api.put(`/api/v1/list/${listId}/${todoId}`, 
       {
         todoTitle,
         estimatedTime,
         deadline:formattedDate,
         difficulty,
         importance
-      }, {
-        headers: {Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}
       })
 
       getTodos()
@@ -69,28 +67,22 @@ const Todo = ({listId, todo, getTodos, deleteTodo}) => {
 
   const _deleteTodo = async() => {
     if(window.confirm("할 일을 삭제하시겠습니까?")){
-      const res = await axios.delete(`/api/v1/list/${listId}/${todoId}`, {
-        headers: {Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}
-      })
-      if(res.status === 200)
+      const res = await api.delete(`/api/v1/list/${listId}/${todoId}`)
+      if (res.data.resultType === "S"){
         deleteTodo(todoId)
-        // getTodos()
+      } else if (res.data.resultType === "F") {
+        console.log(res.data.errCode)
+      }
     }
   }
 
   const changeStatus = async() => {
-    try{
-      const res = await axios.put(`/api/v1/list/${listId}/${todoId}/status`,
-      {
-        status:status===0?1:0
-      }, 
-      {
-        headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}
-      })
-      getTodos()
+    const res = await api.put(`/api/v1/list/${listId}/${todoId}/status`, {status:(status+1)%2});
+    console.log(res)
+    if (res.data.resultType === "S"||res.data==='Change Success') {
       setStatus(pre=>(pre+1)%2)
-    } catch(err) {
-      console.log(err)
+    } else if (res.data.resultType === "F") {
+      console.log(res.data.errCode)
     }
   }
 
@@ -114,9 +106,8 @@ const Todo = ({listId, todo, getTodos, deleteTodo}) => {
   }
 
   return (
-
     <div 
-      className={styles.todoapp__item}
+      className={Boolean(status)===toggleDone?styles.todoapp__item:styles.hidden}
       onClick={()=>{
         setBackClicked(true)
       }}

@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import styled from "styled-components";
-import axios from "axios";
 
 import Input from "./Input"
 import Spinner from "./Spinner";
+import api from "../functions/api";
+import { ListsContext } from "../context/listsContext";
 
 const StyledDiv = styled.div`
   ${props=>props.isEditing&&"display: flex;"}
@@ -16,7 +17,9 @@ const StyledDiv = styled.div`
   background-color: ${props=>props.isEditing?"rgba(100, 0, 0, 0.1)":"rgba(0, 0, 0, 0.1)"};
 `
 
-const TodoList = ({ className, listId, text, isEditing, setTodoLists, todoLists}) => {
+const TodoList = ({ className, listId, text, isEditing}) => {
+  const {lists, setLists} = useContext(ListsContext);
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [ETitle, setETitle] = useState(text);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -74,14 +77,10 @@ const TodoList = ({ className, listId, text, isEditing, setTodoLists, todoLists}
   const deleteTodoList = async() => {
     console.log(`Try to delete listId:${listId}`)
     setDeleteLoading(true)
-    const res = await axios.delete(`/api/v1/list/${listId}`, {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-      }
-    });
+    const res = await api.delete(`/api/v1/list/${listId}`);
 
     if(res.data.resultType === "S") {
-      setTodoLists(pre=>[...pre.filter(todoList=>todoList.listId !== listId)])
+      setLists(pre=>[...pre.filter(todoList=>todoList.listId !== listId)])
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode){
         case "AE_001":
@@ -96,25 +95,18 @@ const TodoList = ({ className, listId, text, isEditing, setTodoLists, todoLists}
 
   const changeTodoListTitle = async() => {
     console.log(`Try to change title ${text} to ${ETitle} listId:${listId}`)
-    const res = await axios.put(`/api/v1/list/${listId}`, 
-    {
-      changeListName:ETitle, //변경될 이름
-    }, 
-    {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-      }
-    });
+    const res = await api.put(`/api/v1/list/${listId}`, {changeListName:ETitle}); //변경될 이름
+    
     if(res.data.resultType === "S") {
       setIsEditingTitle(false);
       const newLists = []
-      for(var list of todoLists){
+      for(var list of lists){
         if (list.listId === listId) {
           list.listName = ETitle
         }
         newLists.push(list)
       }
-      setTodoLists(newLists);
+      setLists(newLists);
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode) {
         case "AE_001":

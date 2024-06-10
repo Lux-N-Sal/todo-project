@@ -73,7 +73,6 @@ const Register = () => {
     async checkIdDup(e) {
       e.preventDefault();
       const res = await axios.post("/api/v1/user/join/id", {loginId:id});
-      console.log(res)
       if (res.data.resultType === "S") {
         setIdChecked(true);
       } else if (res.data.resultType === "F") {

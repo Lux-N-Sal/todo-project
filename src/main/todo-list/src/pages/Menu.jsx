@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import styled from "styled-components";
-import axios from "axios";
 
 import styles from "../styles/Menu.module.css";
 
 import TodoList from "../components/TodoList";
 import Spinner from "../components/Spinner";
 import { logout } from "../functions/auth";
+import api from "../functions/api";
+import { ListsContext } from "../context/listsContext";
 
 const ToDoListInput = styled.input`
   margin-left: 35px;
@@ -21,11 +22,13 @@ const activeStyle = {
 }
 
 const Menu = () => {
+  const { lists, setLists } = useContext(ListsContext);
+
   const [expended, setExpended] = useState(false);
   const [inputExpended, setInputExpended] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toDoListName, setToDoListName] = useState("");
-  const [toDoLists, setToDoLists] = useState([]);
+  // const [toDoLists, setToDoLists] = useState([]);
   const [menuExpended, setMenuExpended] = useState(false);
   const [addListLoading, setAddListLoading] = useState(false);
 
@@ -40,15 +43,10 @@ const Menu = () => {
 
   const createToDoList = async() => {
     setAddListLoading(true);
-    const res = await axios.post("/api/v1/list/create", 
-    { listName: toDoListName }, 
-    {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-      }
-    })
+    const res = await api.post("/api/v1/list/create", { listName: toDoListName });
+
     if (res.data.resultType === "S"){
-      setToDoLists(pre=>[...pre, res.data.body])
+      setLists(pre=>[...pre, res.data.body])
       expendInput();
     } else if(res.data.resultType === "F") {
       switch(res.data.errorCode){
@@ -67,18 +65,18 @@ const Menu = () => {
   }
 
   const getToDoListData = async() => {
-    if ((sessionStorage.getItem("accessToken") != null) && toDoLists.length === 0) {
-      const res = await axios.get("/api/v1/list/lists", {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-        }
-      });
-      setToDoLists(res.data.body.toDoListDto)
+    if ((sessionStorage.getItem("accessToken") != null) && lists.length === 0) {
+      const res = await api.get("/api/v1/list/lists");
+      if (res.data.resultType === "S"){
+        setLists(res.data.body.toDoListDto)
+      } else if (res.data.resultType === "F") {
+        console.log(res.data.errCode)
+      }
     }
   };
 
   useEffect(()=>{
-    getToDoListData();
+    // getToDoListData();
   }, [expended])
 
   const expendToDoList  = () => setExpended(pre=>!pre)
@@ -105,21 +103,19 @@ const Menu = () => {
     expendTodoLists();
   }, [controls, expended])
 
-  const deleteTodoList = (listId) => {
-    setToDoLists(pre=>[...pre.filter(todoList=>todoList.listId !== listId)])
-  }
+  // const deleteTodoList = (listId) => {
+  //   setLists(pre=>[...pre.filter(todoList=>todoList.listId !== listId)])
+  // }
 
   const TodoLists = () => {
     return (
-      toDoLists.map((toDoList, idx) => 
+      lists.map((toDoList, idx) => 
         <TodoList 
           key={idx}
           className={styles.todoList} 
           listId={toDoList.listId}
           text={toDoList.listName}
           isEditing={isEditing}
-          setTodoLists = {setToDoLists}
-          todoLists={toDoLists}
         />)
     )
   }
@@ -211,7 +207,7 @@ const Menu = () => {
             </AnimatePresence>
           </div>
 
-          {toDoLists&&(
+          {lists&&(
             <motion.div
               style={{overflow:"hidden"}}
               initial={{display:"none", height:"0px"}}

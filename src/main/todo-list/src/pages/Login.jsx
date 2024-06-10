@@ -8,6 +8,7 @@ import styles from "../styles/Login.module.css"
 import Input from "../components/Input"
 import Button from "../components/Button"
 import Spinner from "../components/Spinner"
+import api from "../functions/api"
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const Login = () => {
       }});
       if (res.data.resultType === "S") {
         sessionStorage.setItem("accessToken", res.data.body.sessionId);
+        api.defaults.headers.common['Authorization'] = 'Bearer ' + res.data.body.sessionId;
         navigate("/");
         setLoading(false);
       } else if (res.data.resultType === "F") {

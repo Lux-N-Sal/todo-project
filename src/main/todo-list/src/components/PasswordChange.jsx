@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import axios from "axios";
 
 import styles from "../styles/PasswordChange.module.css"
 
 import Input from "./Input";
 import Button from "./Button";
 import Spinner from "./Spinner";
+import api from "../functions/api";
 
 const PasswordChange = ({setChangingPW}) => {
   const [pw, setPw] = useState("");
@@ -21,14 +21,10 @@ const PasswordChange = ({setChangingPW}) => {
     if(isPwSame) {
       try {
         setLoading(true)
-        const res = await axios.put("/api/v1/user/info", 
+        const res = await api.put("/api/v1/user/info", 
         {
           changePassword:cPw,
           password:pw,
-        }, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-          }
         })
         sessionStorage.removeItem("accessToken")
         alert("비밀번호가 변경되었습니다.")

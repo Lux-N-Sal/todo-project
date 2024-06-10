@@ -1,13 +1,16 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 
 import styles from "../styles/TodoTable.module.css"
 
 import Todo from "./Todo"
+import api from "../functions/api";
+import { ListsContext } from "../context/listsContext";
 
 const TodoTable = ({listId, reload, setIsLoading}) => {
+  const {lists} = useContext(ListsContext);
+
   const [todos, setTodos] = useState([]);
   const [listName, setListName] = useState("");
 
@@ -20,6 +23,14 @@ const TodoTable = ({listId, reload, setIsLoading}) => {
     })
   }
 
+  const getListName = () => {
+    for (var list of lists) {
+      if (listId === list.listId) {
+        setListName(list.listName)
+      }
+    }
+  }
+
   const deleteTodo = (todoId) => {
     setIsLoading(true)
     setTodos(pre=>[...pre.filter(todo=>todo.toDoId !== todoId)])
@@ -27,18 +38,12 @@ const TodoTable = ({listId, reload, setIsLoading}) => {
   }
 
   const getTodos = async() => {
-    let res;
     setIsLoading(true)
-    try{
-        res = await axios.get(`/api/v1/list/${listId}/todos`, {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-            }
-        });
-        setListName(res.data.list.listName)
-        setTodos([...res.data.todos])
-    } catch(err) {
-      console.log(err)
+    const res = await api.get(`/api/v1/list/${listId}/todos`);
+    if (res.data.resultType === "S"){
+      setTodos([...res.data.body])
+    } else if (res.data.resultType === "F") {
+      console.log(res.data.errCode)
     }
     setIsLoading(false)
   }
@@ -49,24 +54,9 @@ const TodoTable = ({listId, reload, setIsLoading}) => {
 
   useEffect(()=>{
     setIsLoading(false)
+    getListName()
     getTodos()
   }, [listId, reload])
-
-
-  const Todos = () => {
-    return (
-      todos.map((todo, idx)=> {
-        return Boolean(todo.status)===toggleDone&&
-          <Todo
-            key={idx}
-            listId={listId}
-            todo={todo}
-            getTodos={getTodos}
-            deleteTodo={deleteTodo}
-          />
-      })
-    )
-  }
 
   return (
     
@@ -99,7 +89,17 @@ const TodoTable = ({listId, reload, setIsLoading}) => {
         }}
       >
         <div>
-          <Todos />
+          {todos.map((todo, idx)=> {
+            return(
+              <Todo
+                key={idx}
+                listId={listId}
+                todo={todo}
+                getTodos={getTodos}
+                deleteTodo={deleteTodo}
+                toggleDone={toggleDone}
+              />)
+          })}
         </ div>
       </div>
     </div>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import axios from "axios"
 
 import styles from "../styles/Todo.module.css"
 
@@ -13,6 +12,7 @@ import Deadline from "../components/Deadline"
 import Difficulty from "../components/Difficulty"
 import TodoTable from "../components/TodoTable"
 import Spinner from "../components/Spinner"
+import api from "../functions/api"
 
 
 
@@ -65,17 +65,13 @@ const TodoBase = ({setIsLoading}) => {
             let convertedDate = new Date(deadline.getTime() - timezoneOffset);
 
             let formattedDate = convertedDate.toISOString().slice(0, 16);
-            res = await axios.post(`/api/v1/list/${listId}/create`, {
+            res = await api.post(`/api/v1/list/${listId}/create`, {
                 todoTitle: content,
                 importance: importance,
                 estimatedTime: estimatedTime,
                 difficulty: difficulty,
                 deadline: formattedDate,
-            }, {
-                headers : {
-                    Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-                }
-            })
+            });
             
             setContent("")
             setImportance(0);

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import axios from "axios";
 
 import ProfileInfo from "../components/ProfileInfo";
 import Button from "../components/Button";
 import PasswordChange from "../components/PasswordChange";
+import api from "../functions/api";
 
 const coverStyle = {
   position: "fixed",
@@ -21,11 +21,7 @@ const Mypage = ({setIsLoading}) => {
 
   const getUserInfo = async() => {
     setIsLoading(true)
-    const res = await axios.get(`/api/v1/user/info`, {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-      }
-    });
+    const res = await api.get(`/api/v1/user/info`);
     if (res.data.resultType === "S") {
       setUserInfo(res.data.body)
     } else if(res.data.resultType === "F") {

@@ -1,25 +1,27 @@
-import { useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import axios from "axios"
 
 import styles from "../styles/Intro.module.css"
 
 import TodoTable from "../components/TodoTable"
 import Spinner from "../components/Spinner"
+import api from "../functions/api"
+import { ListsContext } from "../context/listsContext"
 
 const Intro = ({setIsLoading}) => {
+  const {lists, setLists} = useContext(ListsContext);
+
   const [userName, setUserName] = useState("당신");
   const [logined, setLogined] = useState(false);
   const [setting, setSetting] = useState(false);
   const [mainList, setMainList] = useState(0);
   const [tempMainList, setTempMainList] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [todoLists, setTodoLists] = useState([]);
+  // const [todoLists, setTodoLists] = useState([]);
 
   const getMainInfo = async() => {
     if(sessionStorage.getItem("accessToken") != null) {
-      const res = await axios.get("/api/v1/user/main", 
-        {headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}})
+      const res = await api.get("/api/v1/user/main")
 
       if(res.data.resultType === "S") {
         setUserName(res.data.body.userName);
@@ -34,13 +36,9 @@ const Intro = ({setIsLoading}) => {
 
   const getTodoLists = async() => {
     if (sessionStorage.getItem("accessToken") != null) {
-      const res = await axios.get("/api/v1/list/lists", {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`
-        }
-      });
+      const res = await api.get("/api/v1/list/lists");
       if(res.data.resultType === "S"){
-        setTodoLists(res.data.body.toDoListDto)
+        setLists(res.data.body.toDoListDto)
       } else if(res.data.resultType === "F") {
         console.log(res.data.error)
       }
@@ -50,10 +48,7 @@ const Intro = ({setIsLoading}) => {
 
   const changeMainList = async() => {
     setLoading(true)
-    const res = await axios.put("/api/v1/user/main",
-      {mainToDoListId:tempMainList},
-      {headers:{Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`}}
-    )
+    const res = await api.put("/api/v1/user/main", {mainToDoListId:tempMainList})
     if(res.data.resultType === "S"){
       setMainList(res.data.body.toDoListDto)
       setTempMainList(res.data.body.toDoListDto)
@@ -109,7 +104,7 @@ const Intro = ({setIsLoading}) => {
                   <div
                     className={styles["mainList-conf-list"]}
                   >
-                    {todoLists.map((todoList, idx)=> {
+                    {lists.map((todoList, idx)=> {
                       return(
                         <motion.div 
                           key={idx} 

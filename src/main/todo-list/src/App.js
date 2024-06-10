@@ -12,7 +12,6 @@ import DarkMode from "./components/DarkMode";
 import Theme from "./components/Theme";
 import Loading from "./components/Loading"
 import { useEffect, useState } from "react";
-import ExpiredChecker from "./components/ExpiredChecker";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
@@ -21,7 +20,6 @@ function App() {
 
   return (
     <BrowserRouter >
-    <ExpiredChecker />
     <div className={`${styles.app__cover} ${darkMode&&"dark-mode"} ${theme}`}>
       <div className={`${styles.app}` }>
         <div
